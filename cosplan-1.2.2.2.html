@@ -1,0 +1,3172 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="Ckb9fJBW735Nj1W78ia5Hr">
+<head data-page-node-id="OpXqXk2iDqNGqxLbwNotGw">
+<meta charset="utf-8" data-page-node-id="vwGCxvLh6qe5CjZkfmfr1U">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" data-page-node-id="DaaHcppgBP8Fa2ihGtxYQc">
+<meta name="theme-color" content="#7c5cff" data-page-node-id="u1mHW97AHHBoCkpESP39S9">
+<title>CosPlan · Cosplay 计划器 v1.2.2.2</title>
+<style>
+/* ============ 基础与主题 ============ */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+  background:var(--bg);color:var(--fg);font-size:15px;line-height:1.5;
+  -webkit-text-size-adjust:100%;
+}
+:root{
+  --bg:#f4f5fa; --card:#ffffff; --fg:#20222c; --sub:#6b7183; --line:#e6e8f0;
+  --accent:#7c5cff; --accent-soft:#efeaff; --accent2:#ff7aa2; --accent2-soft:#ffeef4;
+  --ok:#1fa971; --ok-soft:#e3f7ee; --warn:#d98216; --warn-soft:#fdf1de;
+  --danger:#e04357; --danger-soft:#ffe9ec; --info:#2f7de1; --info-soft:#e6f0fd;
+  --gray-soft:#eef0f5; --radius:14px; --shadow:0 2px 10px rgba(30,32,60,.06);
+  --nav-h:58px;
+}
+.hidden{display:none!important}
+button,input,select,textarea{font-family:inherit;font-size:15px;color:inherit}
+a{color:var(--info);text-decoration:none;word-break:break-all}
+/* ============ 布局骨架 ============ */
+#app{max-width:860px;margin:0 auto;min-height:100%;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px)}
+/* v1.2：滑动时行会横向位移，裁掉横向溢出，避免窄屏出现左右滑动条 */
+#main{overflow-x:clip;padding:12px 14px 20px}
+.topbar{
+  position:sticky;top:0;z-index:30;background:rgba(244,245,250,.94);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:10px 14px;display:flex;align-items:center;gap:8px;min-height:52px;
+}
+.topbar h1{font-size:17px;margin:0;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar .sub{font-size:12px;color:var(--sub);font-weight:400;display:block;margin-top:1px}
+main{padding:12px 14px 20px}
+.tabbar{
+  position:fixed;bottom:0;left:0;right:0;z-index:40;background:var(--card);border-top:1px solid var(--line);
+  display:flex;padding-bottom:env(safe-area-inset-bottom);
+}
+.tabbar button{
+  flex:1;background:none;border:0;padding:8px 2px 6px;color:var(--sub);font-size:11px;line-height:1.3;cursor:pointer;
+}
+.tabbar button.on{color:var(--accent);font-weight:700}
+.tabbar button .ic{display:block;font-size:18px;line-height:1.1}
+/* ============ 卡片/列表 ============ */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px;margin-bottom:12px;overflow:hidden}
+.card.flat{box-shadow:none;border:1px solid var(--line)}
+.card h3{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:6px}
+.card h3 .cnt{font-size:12px;color:var(--sub);font-weight:400}
+.card h3 .act{margin-left:auto;font-size:12px;color:var(--accent);background:none;border:0;cursor:pointer;font-weight:600}
+.sect-title{font-size:13px;color:var(--sub);font-weight:700;margin:16px 2px 8px;letter-spacing:.5px}
+.row{display:flex;align-items:center;gap:8px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer;min-height:50px}
+.row:last-child{border-bottom:0}
+.row .main{flex:1;min-width:0}
+.row .t{font-weight:600}
+.row .d{font-size:12px;color:var(--sub);margin-top:2px}
+.row .r{text-align:right;font-size:12px;color:var(--sub);white-space:nowrap}
+.empty{padding:18px 10px;text-align:center;color:var(--sub);font-size:13px;background:var(--gray-soft);border-radius:10px}
+.kv{display:flex;gap:8px;font-size:13px;padding:4px 0;border-bottom:1px dashed var(--line)}
+.kv:last-child{border-bottom:0}
+.kv .k{width:74px;color:var(--sub);flex:none}
+.kv .v{flex:1;min-width:0;word-break:break-word;overflow-wrap:anywhere}
+.kv .v a{overflow-wrap:anywhere}
+/* 1.1.2：长英文串 / URL / 无空格路径在窄屏会撑破卡片（实测 375px 下溢出可达 3753px），统一断行。中文天然可换行，不受影响 */
+.card,.card *,.empty,.stage-head h2,.danger-box,.warn-box{overflow-wrap:anywhere;word-break:break-word}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:400px){.grid3{grid-template-columns:1fr 1fr}}
+.stat{background:var(--card);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow)}
+.stat .n{font-size:19px;font-weight:800;letter-spacing:-.5px}
+.stat .l{font-size:11px;color:var(--sub);margin-top:2px}
+/* ============ 标签/徽章 ============ */
+.badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:999px;background:var(--gray-soft);color:var(--sub);white-space:nowrap}
+.badge.b-ok{background:var(--ok-soft);color:var(--ok)}
+.badge.b-warn{background:var(--warn-soft);color:var(--warn)}
+.badge.b-danger{background:var(--danger-soft);color:var(--danger)}
+.badge.b-info{background:var(--info-soft);color:var(--info)}
+.badge.b-accent{background:var(--accent-soft);color:var(--accent)}
+.badge.b-pink{background:var(--accent2-soft);color:var(--accent2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12.5px;padding:8px 13px;min-height:36px;border-radius:999px;background:var(--gray-soft);color:var(--sub);border:0;cursor:pointer}
+.chip.on{background:var(--accent);color:#fff;font-weight:600}
+/* v1.2：状态回退用虚线框，跟「往前推」的实心 chip 一眼能分开 */
+.chip.back{background:transparent;border:1px dashed var(--line);color:var(--sub)}
+/* v1.2.2 滑动槽：筛选条横向滚，不折行 —— 之前窄屏下 chip 被压成一字一行，整块 UI 看起来是乱的 */
+.pill-row{display:flex;flex-wrap:nowrap;gap:7px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch;touch-action:pan-x;scrollbar-width:none}
+.pill-row::-webkit-scrollbar{display:none}
+.pill-row>*{flex:0 0 auto}
+.pill-row .chip{white-space:nowrap}
+.pill-row .f-sel{flex:0 0 auto;max-width:52vw}
+.f-sel{border:1px solid var(--line);border-radius:10px;padding:8px 9px;background:var(--card);color:var(--fg);min-height:36px}
+/* ============ 按钮 ============ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  background:var(--accent);color:#fff;border:0;border-radius:11px;padding:10px 14px;font-weight:600;cursor:pointer;
+}
+.btn:active{opacity:.75}
+.btn.sm{padding:8px 12px;font-size:13.5px;border-radius:10px;min-height:36px}
+.btn.ghost{background:var(--card);color:var(--accent);border:1px solid var(--accent)}
+.btn.gray{background:var(--gray-soft);color:var(--fg)}
+.btn.danger{background:var(--danger-soft);color:var(--danger)}
+.btn.block{width:100%}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn-row .btn{flex:1;min-width:0}
+.fab{
+  position:fixed;right:16px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 18px);z-index:35;
+  width:50px;height:50px;border-radius:50%;background:var(--accent);color:#fff;border:0;font-size:26px;line-height:1;
+  box-shadow:0 6px 16px rgba(124,92,255,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+/* ============ v1.2 滑动手势 ============ */
+.sw{touch-action:pan-y}
+.swin{position:relative;flex:1;min-width:0;overflow:hidden}
+.swrow{display:flex;align-items:center;gap:10px;width:100%;min-width:0}
+/* 面板做成超宽块贴住要揭示的那一侧，未滑动的部分被 .swmain 盖住，看到的就是「露出来的一条」 */
+.swpanel{position:absolute;top:0;bottom:0;width:999px;z-index:0;pointer-events:none;display:none;align-items:center}
+.swpanel.right{right:0;justify-content:flex-end;padding-right:14px}
+.swpanel.left{left:0;padding-left:14px}
+.sw.sw-r .swpanel.right{display:flex;background:var(--ok-soft)}
+.sw.sw-l .swpanel.left{display:flex;background:var(--gray-soft)}
+.swpanel b{position:relative;z-index:1;font-size:12.5px;font-weight:700;white-space:nowrap}
+.swpanel.left b{color:var(--sub)}
+.swpanel.right b{color:var(--ok)}
+.swlab{position:absolute;top:0;bottom:0;left:0;right:0;z-index:0;background:var(--accent);opacity:0}
+.swmain{position:relative;z-index:2;background:var(--card)}
+/* 卡片级滑动（项目列表）：内边距挪到内容层，面板才能铺满整卡高度 */
+.cardsw{padding:0}
+.cardsw .swmain{padding:12px}
+#swTab{position:fixed;left:50%;bottom:calc(var(--nav-h) + 46px);transform:translateX(-50%);z-index:95;
+  background:rgba(32,34,44,.92);color:#fff;font-size:13px;padding:8px 15px;border-radius:99px;display:none;white-space:nowrap}
+/* 行内副文案最多两行，窄屏不至于把行撑得过高 */
+.row .d{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+/* 1.2.2 修复（评审 P0）：.toast 整体 pointer-events:none 会连带吞掉「撤销」的点击，只给按钮放行 */
+.toast .u{pointer-events:auto;background:rgba(255,255,255,.22);color:#fff;border:0;border-radius:99px;padding:5px 13px;font-size:13px;font-weight:700;margin-left:10px;cursor:pointer}
+/* ============ 表单 ============ */
+.modal{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.modal.mask-center{align-items:center}
+.modal-mask{position:absolute;inset:0;background:rgba(20,20,35,.45)}
+.modal-body{
+  position:relative;background:var(--bg);width:100%;max-width:640px;max-height:90vh;overflow-y:auto;
+  border-radius:18px 18px 0 0;padding:14px 16px calc(20px + env(safe-area-inset-bottom));
+}
+.modal.mask-center .modal-body{border-radius:18px;max-width:480px;padding-bottom:16px}
+@media(min-width:641px){.modal{align-items:center}.modal-body{border-radius:18px;max-height:88vh}}
+.modal-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;position:sticky;top:-14px;background:var(--bg);padding:6px 0 8px;z-index:2}
+.modal-head h2{font-size:16px;margin:0;flex:1}
+.modal-head .x{background:var(--gray-soft);border:0;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;color:var(--sub)}
+.f{margin-bottom:12px}
+.f>label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px;font-weight:600}
+.f>label .req{color:var(--danger)}
+.f input[type=text],.f input[type=number],.f input[type=date],.f input[type=time],.f input[type=datetime-local],.f input[type=url],.f input[type=tel],.f select,.f textarea{
+  width:100%;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 11px;outline:none;
+}
+.f textarea{min-height:64px;resize:vertical}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--accent)}
+/* 窄屏（手机）下 15px 输入框会触发 iOS 自动放大整页，提到 16px 才不会一打字就跳版 */
+@media(max-width:640px){
+  .f input,.f select,.f textarea,#main input[type=text],#main select{font-size:16px}
+  .f input[type=text],.f input[type=number],.f input[type=date],.f input[type=time],.f input[type=datetime-local],.f input[type=url],.f input[type=tel],.f select,.f textarea{padding:12px 11px}
+}
+.f .hint{font-size:11px;color:var(--sub);margin-top:3px}
+.f.err input,.f.err select,.f.err textarea{border-color:var(--danger)}
+.f-row{display:flex;gap:8px}.f-row .f{flex:1;min-width:0}
+.sub-list{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+.sub-item{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px dashed var(--line)}
+.sub-item:last-child{border-bottom:0}
+.sub-item input{flex:1;min-width:0;border:0;background:none;padding:4px 2px}
+.sub-item .del{background:none;border:0;color:var(--danger);font-size:18px;cursor:pointer;padding:0 4px}
+.check-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);min-height:48px}
+.check-row:last-child{border-bottom:0}
+.check-row input[type=checkbox]{width:24px;height:24px;flex:none;accent-color:var(--accent)}
+.check-row .txt{flex:1;min-width:0}
+.check-row.done .txt{color:var(--sub);text-decoration:line-through}
+/* v1.2：卡片与行只允许竖向 pan，横向手势不会被浏览器抢去当页面平移 */
+.card{touch-action:pan-y}
+/* v1.2.2.2（P2-8）：滑动槽的 touch-action 会与祖先 .card 的 pan-y 取交集 = 空，
+   导致手机上筛选条横滑不动（也不该把整块卡片连竖向一起锁死）。给含滑动槽的卡片单独放开两个方向。
+   用 :has() 精准命中，不影响其它卡片的滑动手势；老浏览器不认 :has() 时退化成原样，不会更糟。 */
+.card:has(.pill-row){touch-action:pan-x pan-y}
+/* ============ 进度/其他 ============ */
+.bar{height:6px;border-radius:99px;background:var(--gray-soft);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.bar.over i{background:var(--danger)}
+.warn-box{background:var(--warn-soft);color:#8a5406;border-radius:10px;padding:9px 11px;font-size:12.5px;margin-bottom:10px}
+.danger-box{background:var(--danger-soft);color:#9c1f30;border-radius:10px;padding:9px 11px;font-size:12.5px;margin-bottom:10px}
+.info-box{background:var(--info-soft);color:#1b4d8f;border-radius:10px;padding:9px 11px;font-size:12.5px;margin-bottom:10px}
+.row-sec{background:var(--danger-soft)!important}
+.toast{
+  position:fixed;left:50%;bottom:calc(var(--nav-h) + 40px);transform:translateX(-50%) translateY(20px);
+  background:rgba(32,34,44,.94);color:#fff;padding:9px 16px;border-radius:99px;font-size:13px;z-index:90;
+  opacity:0;pointer-events:none;transition:all .2s;max-width:88vw;text-align:center;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.muted{color:var(--sub);font-size:12px}
+.tiny{font-size:11px}
+.mono{font-variant-numeric:tabular-nums}
+.right{text-align:right}
+.nowrap{white-space:nowrap}
+hr.sep{border:0;border-top:1px solid var(--line);margin:12px 0}
+.tabs{display:flex;gap:4px;background:var(--gray-soft);padding:3px;border-radius:11px;margin-bottom:12px;overflow-x:auto;position:sticky;top:52px;z-index:25;touch-action:pan-x}
+.tabs button{flex:1;background:none;border:0;padding:10px 6px;border-radius:8px;font-size:13.5px;color:var(--sub);cursor:pointer;white-space:nowrap}
+.tabs button.on{background:var(--card);color:var(--accent);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.stage-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.stage-head h2{font-size:18px;margin:0;flex:1;min-width:120px}
+.prog-list{display:flex;flex-direction:column;gap:8px}
+details.dd{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px}
+details.dd summary{cursor:pointer;font-size:13px;color:var(--sub);font-weight:600;list-style:none}
+details.dd summary::-webkit-details-marker{display:none}
+details.dd[open] summary{margin-bottom:6px;color:var(--fg)}
+</style>
+</head>
+<body data-page-node-id="ZyktdeY1nHtnoj5RoMfAYl">
+<div id="app" data-page-node-id="TyC2KSW076s1qCnc314OzG">
+  <header class="topbar" id="topbar" data-page-node-id="Dost5n0J3F8JkVY1ZYN8lH"></header>
+  <main id="main" data-page-node-id="rWJxnDAT0MrcHUREMCnbWA"></main>
+</div>
+<nav class="tabbar" id="tabbar" data-page-node-id="k4DdzdkT7slJzPLm3A0aiM"></nav>
+<div id="modal" class="modal hidden" data-page-node-id="DUxjeXmHylEJC5YhKCbafH"></div>
+<div id="toast" class="toast" data-page-node-id="JNDDw4D16VnlPOLv1Fz7PG"></div>
+<div id="swTab"></div>
+<script>
+"use strict";
+/* =========================================================
+   CosPlan · Cosplay 计划器 v1.2.2.2
+   单文件本地应用：数据存 localStorage，不上传、不联网。
+   需求依据：同目录《开发交付文档.md》
+   1.2 在 1.1.2 之上加：滑动手势改状态（可撤销）、模块间联动、手机单手操作优化
+   1.2.2 在 1.2 之上改：装备状态口径重排（14→9）、筛选条改成横向滑动槽、
+       选角色自动挂出装、约毛娘自动生成假发、约人只留一个入口（摄影师=拍摄单）、
+       修掉撤销按钮点不动的 P0
+   1.2.2.2 修 1.2.2 走查出的问题：
+       P0 预约单转拍摄单会算错钱（切类型时状态被静默重置，现在显式搬状态+按旧状态口径记账）
+       P1 转换不再静默吞字段、转换前有确认框可取消；零项目时不再卡死存不下；
+          转换时用户在表单里改的状态/定金不再被丢弃（表单=真相，未付款的定金不入账并写进备注）
+       P2 外借中不再残留"卖了/售价"、筛选条括号统一、每个滑动槽都记住滚动位置、
+          derive/必填与渲染口径彻底对齐、自动假发判重不依赖类别、自动起名重名加序号、
+          滑动槽 touch-action 与祖先冲突的加固
+   ========================================================= */
+var APP = { name:'CosPlan', ver:'1.2.2.2', schema:1, storeKey:'cosplan.data.v1' };   /* storeKey 不变，1.1/1.1.2/1.2/1.2.2 数据直接沿用（读档时自动迁到新状态名） */
+
+/* ---------------- 枚举（全中文口径，见文档 §3/§8） ---------------- */
+var STAGES = ['计划中','拍摄中','已出片'];                 // FR-1.4 三类，手动切换可回退
+var OCCASIONS = ['漫展','外景','棚拍','场照','正片','日常自娱','其他'];
+var RESTORE_TARGETS = ['高','中','低'];
+var WORK_TYPES = ['游戏','番剧','漫画','小说','VTB','原创','其他'];
+
+var ASSET_KINDS = ['C服','道具','假发','美瞳','鞋','饰品','消耗品'];
+var ASSET_CATS = {
+  'C服':['上装','下装','外套','连衣裙','内衣打底','披风/外褂','其他'],
+  '道具':['手持','背饰','翅膀','头饰','家具','载具','其他'],
+  '假发':['整顶假发','发片','头饰毛件','其他'],
+  '美瞳':['美瞳','眼镜','其他'],
+  '鞋':['靴','鞋','拖鞋','其他'],
+  '饰品':['颈饰','手饰','耳饰','腰饰','指环','其他'],
+  '消耗品':['甲片','假睫毛','双面胶','护理液','其他']
+};
+var ASSET_SOURCES = ['购买','自制','租赁','二手购入','借用','代工'];
+var MAKE_STAGES = ['设计','打版','下料','组装','打磨','上色','完成'];
+
+/* 状态全集 + 合法推进（文档 §8.1）。额外提供"强制跳转"避免死路 */
+/* v1.2.2 状态口径按 coser 的实际说法重排：14 个状态压成 9 个，一个状态名里带「/」的是同一个意思的两种叫法，不是两个选项 */
+var ITEM_STATUS = ['愿望单/购物车','已下单/制作中','在途','已到货','试穿通过','修改中','外借中','留作纪念','报废/已售'];
+var STATUS_NEXT = {
+  '愿望单/购物车':['已下单/制作中'],
+  '已下单/制作中':['在途','已到货','修改中','愿望单/购物车'],
+  '在途':['已到货','已下单/制作中'],
+  '已到货':['试穿通过','修改中','在途'],
+  '试穿通过':['修改中','外借中','留作纪念','报废/已售','已到货'],
+  '修改中':['试穿通过','已到货','已下单/制作中'],
+  '外借中':['试穿通过'],
+  '留作纪念':['试穿通过'],
+  '报废/已售':[]
+};
+var TERMINAL_STATUS = ['留作纪念','报废/已售'];   // 不再参与"在手装备"与出装清单
+/* 「报废/已售」合并了三件不同的事，用一个子选项区分，回血只算真卖了的那部分 */
+var DISP_KINDS = ['卖了','报废','已归还'];
+var DISPOSAL_TYPES = DISP_KINDS;
+var STATUS_STYLE = {
+  '愿望单/购物车':'b-info','已下单/制作中':'b-warn','在途':'b-warn','已到货':'b-accent',
+  '试穿通过':'b-ok','修改中':'b-danger','外借中':'b-pink','留作纪念':'b-gray','报废/已售':'b-gray'
+};
+
+var ROLES = ['摄影师','妆娘','毛娘','修图师','场地主','亲友','其他'];
+var PLATFORMS = ['微博','小红书','QQ','微信','闲鱼','B站','LOFTER','抖音','其他'];
+var LOCATION_TYPES = ['外景','棚拍','漫展','居家','咖啡厅/店','其他'];
+var SHOOT_METHODS = ['约拍','互免(TFP)','朋友帮拍','自拍/三脚架','棚拍','漫展场照','其他'];
+var SESSION_STATUS = ['计划中','已确认','已完成','已改期','已取消'];
+var APPT_TYPES = ['妆娘','毛娘','摄影师','修图师','场地预定','其他'];
+var APPT_STATUS = ['待确认','已定档','已付定金','已完成','已结清','已取消','爽约'];
+var DELIV_TYPES = ['原片','选片','精修','成片包','其他'];
+var DELIV_STATUS = ['未交付','已交付','已选片','修图中','已返图'];
+var PUB_PLATFORMS = PLATFORMS;
+var EXPENSE_CATS = ['C服','道具','假发','美瞳','鞋','饰品','妆造','摄影','场地','交通','后期修图','其他'];
+/* 出装日应急包默认项（FR-7.2） */
+var EMERGENCY_KIT = ['别针/安全扣','双面胶/透明胶','针线包','充电宝+数据线','湿巾/纸巾','隐形眼镜盒+护理液','卸妆用品','换衣罩衫','暖宝宝/小风扇','平底鞋(换脚)','吸管杯','身份证与零钱'];
+
+/* ---------------- v1.2 滑动推进表：每个状态只有一步「前进」和一步「退回」（v1.2.2 换新状态口径） ----------------
+   必须是 STATUS_NEXT 的合法边，否则滑动就等于绕过状态机。
+   报废/已售 不给滑动手势：要记去向 CN；滑进「外借中」同理（要记借给谁），但外借中本身可以往前滑一下表示「要回来了」。 */
+var ITEM_SWIPE_NEXT = {
+  '愿望单/购物车':'已下单/制作中', '已下单/制作中':'在途', '在途':'已到货', '已到货':'试穿通过',
+  '试穿通过':'修改中', '修改中':'试穿通过', '外借中':'试穿通过',
+  '留作纪念':'', '报废/已售':''
+};
+var ITEM_SWIPE_PREV = {
+  '愿望单/购物车':'', '已下单/制作中':'愿望单/购物车', '在途':'已下单/制作中', '已到货':'在途',
+  '试穿通过':'已到货', '修改中':'已到货', '外借中':'', '留作纪念':'试穿通过', '报废/已售':''
+};
+/* 线性流程：滑动就按数组顺序前后走一格（已取消/爽约/已改期 需要填原因，只能点不能滑） */
+var SESSION_FLOW = ['计划中','已确认','已完成'];
+var APPT_FLOW    = ['待确认','已定档','已付定金','已完成','已结清'];
+var DELIV_FLOW   = ['未交付','已交付','已选片','修图中','已返图'];
+
+/* ---------------- 工具函数 ---------------- */
+function esc(s){
+  if(s===null||s===undefined) return '';
+  return String(s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function uid(p){ return (p||'x')+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function num(v){ var n=parseFloat(v); return isFinite(n)?n:0; }            // 防 Infinity/NaN
+function numOrNull(v){ if(v===''||v===null||v===undefined) return null; var n=parseFloat(v); return isFinite(n)?n:null; }
+function money(n){ n=num(n); return (Math.round(n*100)/100).toString(); }
+function todayISO(){ var d=new Date(); return isoOf(d); }
+function isoOf(d){
+  var m=('0'+(d.getMonth()+1)).slice(-2), dd=('0'+d.getDate()).slice(-2);
+  return d.getFullYear()+'-'+m+'-'+dd;
+}
+function nowStamp(){ var d=new Date(); return isoOf(d)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+function dayDiff(iso){                       // iso 距今天数：过去为负
+  if(!iso) return null;
+  var a=new Date(String(iso).slice(0,10)+'T00:00:00'), b=new Date(todayISO()+'T00:00:00');
+  if(isNaN(a.getTime())) return null;
+  return Math.round((a-b)/86400000);
+}
+function dueText(iso){
+  var d=dayDiff(iso); if(d===null||d===undefined) return '';
+  if(d<0) return '逾期'+(-d)+'天';
+  if(d===0) return '今天';
+  if(d===1) return '明天';
+  if(d<=30) return d+'天后';
+  return iso;
+}
+function isPast(iso){ var d=dayDiff(iso); return d!==null && d<0; }
+function arr(v){ return Array.isArray(v)?v:[]; }
+function byId(list,id){ for(var i=0;i<list.length;i++) if(list[i].id===id) return list[i]; return null; }
+function sortDesc(list,key){ return list.slice().sort(function(a,b){ return String(b[key]||'').localeCompare(String(a[key]||'')); }); }
+function sortAsc(list,key){ return list.slice().sort(function(a,b){ return String(a[key]||'~').localeCompare(String(b[key]||'~')); }); }
+function sum(list,key){ var t=0; for(var i=0;i<list.length;i++) t+=num(list[i][key]); return t; }
+function uniq(list){ var s={},o=[]; for(var i=0;i<list.length;i++){ if(!s[list[i]]){s[list[i]]=1;o.push(list[i]);} } return o; }
+
+/* ---------------- 存储层（M13） ---------------- */
+function emptyData(){
+  return {
+    v:APP.schema, works:[], characters:[], projects:[], items:[], contacts:[], locations:[],
+    sessions:[], appointments:[], deliverables:[], publications:[], expenses:[], todos:[],
+    meta:{ created_at:nowStamp(), updated_at:nowStamp() }
+  };
+}
+var DB = emptyData();
+var WRITE_SEQ = 0;   /* v1.2：每次落盘计数，滑动后的「撤销」只在这之后没有新写入时才有效 */
+
+/* v1.2.2 状态名迁移表：旧状态 → 新状态。合并方向都取"更靠近现实动作"的那一个 */
+var ITEM_STATUS_MIG = {
+  '愿望单':'愿望单/购物车', '计划中':'愿望单/购物车',
+  '已下单':'已下单/制作中', '制作中':'已下单/制作中',
+  '在途':'在途', '已到手':'已到货', '已完成':'已到货',
+  '需修改':'修改中', '试装通过':'试穿通过', '可用':'试穿通过', '外借中':'外借中',
+  '已售出':'报废/已售', '已报废':'报废/已售', '已归还':'报废/已售'
+};
+var DISP_KIND_MIG = { '已售出':'卖了', '已报废':'报废', '已归还':'已归还' };
+
+function migrate(raw){
+  /* 读档缺字段一律补默认值（历史 Bug #10 教训） */
+  var d = emptyData();
+  if(!raw || typeof raw !== 'object') return d;
+  for(var k in d){
+    if(k==='meta'||k==='v') continue;
+    if(Array.isArray(raw[k])) d[k]=raw[k];
+  }
+  d.meta = (raw.meta&&typeof raw.meta==='object')?raw.meta:d.meta;
+  d.v = APP.schema;
+  /* 1.0 → 1.1 口径迁移：服装→C服、道友→亲友 */
+  if(Array.isArray(raw.items)) raw.items.forEach(function(x){ if(x&&x.kind==='服装') x.kind='C服'; });
+  if(Array.isArray(raw.expenses)) raw.expenses.forEach(function(x){ if(x&&x.category==='服装') x.category='C服'; });
+  if(Array.isArray(raw.contacts)) raw.contacts.forEach(function(x){ if(x&&Array.isArray(x.roles)) x.roles=x.roles.map(function(t){return t==='道友'?'亲友':t;}); });
+  /* 1.2 → 1.2.2 装备状态口径迁移：14 个状态并成 9 个，处置三态合并成「报废/已售」+ dispKind 子选项 */
+  if(Array.isArray(raw.items)) raw.items.forEach(function(x){
+    if(!x||typeof x!=='object') return;
+    var old=x.status;
+    if(ITEM_STATUS_MIG[old]) x.status=ITEM_STATUS_MIG[old];
+    else if(ITEM_STATUS.indexOf(old)<0) x.status='愿望单/购物车';
+    if(!x.dispKind) x.dispKind = DISP_KIND_MIG[old] || (DISP_KINDS.indexOf(x.dispType)>=0?x.dispType:'');
+    if(x.status==='报废/已售'&&!x.dispKind) x.dispKind='报废';
+    if(x.status==='报废/已售') x.dispType=x.dispKind;
+    /* v1.2.2.2（P2-1）：外借中 也是 isDisposalStatus，但它不该带着"卖了/售价"——
+       否则详情页会显示「回血 150 元」而首页 soldBack 又不算，两处口径打架。 */
+    if(x.status==='外借中'){ x.dispType='外借'; x.dispKind=''; x.dispPrice=null; x.dispReason=''; }
+    else if(TERMINAL_STATUS.indexOf(x.status)<0){ x.dispType=''; x.dispKind=''; }
+  });
+  /* 逐条补默认，防止旧备份缺字段（只补会用到的，不造无意义字段） */
+  var need = {
+    works:{name:'',type:'',note:''},
+    characters:{workId:'',name:'',note:''},
+    projects:{name:'',characterId:'',skin:'',stage:'计划中',occasion:'',deadline:'',restore:'',budget:null,archived_at:'',refLinks:[],note:''},
+    items:{name:'',kind:'C服',category:'',status:'愿望单/购物车',source:'购买',characterId:'',projectIds:[],shop:'',link:'',price:null,
+      size:'',orderDate:'',arrivedDate:'',storage:'',makeStage:'',makeProgress:null,fragile:'',qty:null,lowQty:null,
+      wigColor:'',wigLen:'',wigStyle:'',wigBy:'',clBrand:'',clDia:'',powerL:'',powerR:'',throwType:'',openedAt:'',expiresAt:'',
+      dispType:'',dispKind:'',dispDate:'',dispPrice:null,dispTo:'',dispReason:'',fittings:[],refLinks:[],note:'',autoFrom:''},
+    contacts:{cn:'',roles:[],platforms:[],phone:'',portfolio:'',priceNote:'',rating:'',warning:false,warnReason:'',note:''},
+    locations:{name:'',type:'',address:'',gather:'',fee:null,traffic:'',facilities:'',bestHours:'',risk:'',refLinks:[],note:''},
+    sessions:{projectId:'',date:'',time:'',method:'',contactId:'',photographerText:'',locationId:'',locationText:'',
+      fee:null,deposit:null,status:'计划中',changeReason:'',timeline:'',backup:'',checklist:[],note:''},
+    appointments:{projectId:'',type:'',contactId:'',contactText:'',datetime:'',place:'',fee:null,deposit:null,
+      status:'待确认',paidNote:'',requirement:'',refLinks:[],note:''},
+    deliverables:{sessionId:'',type:'原片',agreedCount:null,actualCount:null,agreedDate:'',deliveredDate:'',link:'',retouch:'',status:'未交付',note:''},
+    publications:{projectId:'',deliverableId:'',platform:'',url:'',date:'',caption:'',tags:'',stats:'',note:''},
+    expenses:{projectId:'',date:'',category:'其他',amount:0,refType:'',refId:'',note:'',source:'手动',paidBy:''},
+    todos:{projectId:'',refType:'',refId:'',title:'',due:'',done:false,note:''}
+  };
+  for(var coll in need){
+    d[coll] = arr(d[coll]).map(function(it){
+      if(!it||typeof it!=='object') return null;
+      var spec=need[coll];
+      for(var f in spec) if(it[f]===undefined) it[f]=spec[f];
+      if(!it.id) it.id = uid(coll.slice(0,3));
+      return it;
+    }).filter(Boolean);
+  }
+  /* 1.1.2：装备台账按 updated_at 倒序，老备份缺这个字段会永远沉底 */
+  d.items.forEach(function(it){ if(!it.updated_at) it.updated_at=nowStamp(); });
+  return d;
+}
+function load(){
+  try{
+    var raw = localStorage.getItem(APP.storeKey);
+    DB = migrate(raw?JSON.parse(raw):null);
+  }catch(e){
+    DB = emptyData();
+    setTimeout(function(){ toast('本地数据读取失败，已用空库启动。请检查浏览器是否禁用了存储'); },300);
+  }
+}
+function save(){
+  DB.meta = DB.meta||{}; DB.meta.updated_at = nowStamp();
+  WRITE_SEQ++;
+  try{
+    localStorage.setItem(APP.storeKey, JSON.stringify(DB));
+    return true;
+  }catch(e){
+    toast('保存失败：浏览器存储已满或被禁用，请立刻用「我的-导出备份」');
+    return false;
+  }
+}
+/* 所有集合统一增删改，自动落盘 */
+function put(coll,obj){ var i=idxOf(DB[coll],obj.id); if(i>=0) DB[coll][i]=obj; else DB[coll].push(obj); save(); return obj; }
+function idxOf(list,id){ for(var i=0;i<list.length;i++) if(list[i].id===id) return i; return -1; }
+function del(coll,id){
+  DB[coll] = DB[coll].filter(function(x){return x.id!==id;});
+  save();
+}
+function get(coll,id){ return byId(DB[coll],id); }
+
+/* ---------------- 界面状态 ---------------- */
+var S = {
+  view:'home', tab:'home', projectId:null, itemId:null, contactId:null, locationId:null,
+  assetTab:'全部', assetQ:'', assetStatus:'', assetRole:'', assetAvailable:false,
+  projectStage:'', projectQ:'', contactRole:'', contactQ:'', teamTab:'contacts', locationQ:'',
+  projTab:'base', sessionTab:{}
+};
+function go(view,patch){
+  var prevPid=S.projectId;
+  S.view=view; if(patch) for(var k in patch) S[k]=patch[k];
+  /* 1.1.2 修复：换项目时重置分页（否则看 A 的「费用」页后进 B 会直接落在「费用」页）；
+     但同一项目内跳转（如从拍摄单返回）保留当前分页，不打断操作。 */
+  if(view==='project'){
+    if(S.projectId!==prevPid) S.projTab=(patch&&patch.projTab)||'base';
+    else if(patch&&patch.projTab) S.projTab=patch.projTab;
+  }
+  window.scrollTo(0,0); render();
+}
+function back(){
+  if(S.view==='project') go('assets',{tab:'projects'});
+  else if(['asset','contact','location','session','appt'].indexOf(S.view)>=0) go('project',{projectId:S.projectId,tab:'projects'});
+  else go('home',{tab:'home'});
+}
+
+/* ---------------- 提示与确认 ---------------- */
+var toastTimer=null, undoFn=null, undoSeq=-1;
+function showToast(html,ms){
+  var el=document.getElementById('toast'); el.innerHTML=html; el.classList.add('on');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ el.classList.remove('on'); undoFn=null; },ms||2200);
+}
+function toast(msg){
+  undoFn=null; showToast(esc(msg));
+}
+/** 带「撤销」的提示：撤销只在期间没有任何新写入时才生效，避免把后来的改动一起回滚 */
+function toastUndo(msg,fn,seq){
+  undoFn=fn; undoSeq=seq;
+  showToast(esc(msg)+'<button class="u" onclick="runUndo()">撤销</button>',4600);
+}
+function runUndo(){
+  if(!undoFn){ return; }
+  if(WRITE_SEQ!==undoSeq){ undoFn=null; toast('撤销已失效：这之后又有新的改动'); return; }
+  var f=undoFn; undoFn=null; f();
+}
+function settings(){
+  if(!DB.meta) DB.meta={};
+  if(!DB.meta.settings) DB.meta.settings={swipe:true,hint:true};
+  var s=DB.meta.settings;
+  if(typeof s.swipe!=='boolean') s.swipe=true;
+  if(typeof s.hint!=='boolean') s.hint=true;
+  return s;
+}
+function setSetting(k,v){ settings()[k]=v; save(); render(); }
+function confirmBox(title,text,onYes,yesLabel){
+  openModal({
+    title:title,
+    body:'<div style="font-size:14px;margin:4px 0 14px">'+esc(text)+'</div>'+
+      '<div class="btn-row"><button class="btn gray" id="cfNo">取消</button><button class="btn" id="cfYes">'+esc(yesLabel||'确定')+'</button></div>',
+    onMount:function(root){
+      root.querySelector('#cfNo').onclick=closeModal;
+      root.querySelector('#cfYes').onclick=function(){ closeModal(); onYes(); };
+    }
+  });
+}
+/* =========================================================
+   弹窗 + 通用表单引擎（所有实体录入复用）
+   ========================================================= */
+function openModal(o){
+  var m=document.getElementById('modal');
+  m.className='modal'+(o.center?' mask-center':'');
+  m.innerHTML=`<div class="modal-mask" id="mMask"></div><div class="modal-body">
+    <div class="modal-head"><h2>${esc(o.title)}</h2>${o.headRight||''}<button class="x" id="mX">✕</button></div>
+    <div id="mContent">${o.body||''}</div></div>`;
+  m.querySelector('#mX').onclick=function(){ closeModal(); if(o.onClose) o.onClose(); };
+  m.querySelector('#mMask').onclick=function(){ closeModal(); if(o.onClose) o.onClose(); };
+  if(o.onMount) o.onMount(m);
+}
+function closeModal(){ var m=document.getElementById('modal'); m.className='modal hidden'; m.innerHTML=''; }
+
+function optsOf(o){
+  var list = (typeof o==='function')?o():o;
+  return (list||[]).map(function(x){ return (x&&typeof x==='object')?x:{v:x,l:x}; });
+}
+function fieldInput(f,V){
+  var v = V[f.k];
+  var reqMark = f.req?'<span class="req"> *</span>':'';
+  var lab = `<label>${esc(f.l)}${reqMark}</label>`;
+  var hint = f.hint?`<div class="hint">${esc(f.hint)}</div>`:'';
+  var id='fld_'+f.k;
+  switch(f.t){
+    case 'area':
+      return `<div class="f" data-fw="${f.k}">${lab}<textarea id="${id}" placeholder="${esc(f.ph||'')}" rows="${f.rows||3}">${esc(v==null?'':v)}</textarea>${hint}</div>`;
+    case 'select': {
+      var os=optsOf(typeof f.opts==='function'?f.opts(V):f.opts);
+      if(!f.req && os.length && os[0].v!=='') os=[{v:'',l:f.ph||'未选择'}].concat(os);
+      var hasGroup=os.some(function(o){return o.g;});
+      var html='';
+      if(hasGroup){
+        var groups=[];
+        os.forEach(function(o){
+          var gname=o.g||'';
+          var g=groups.filter(function(x){return x.name===gname;})[0];
+          if(!g){ g={name:gname,items:[]}; groups.push(g); }
+          g.items.push(o);
+        });
+        html=groups.map(function(g){
+          var inner=g.items.map(function(o){
+            return `<option value="${esc(o.v)}" ${String(v==null?'':v)===String(o.v)?'selected':''}>${esc(o.l)}</option>`;}).join('');
+          return g.name?`<optgroup label="${esc(g.name)}">${inner}</optgroup>`:inner;
+        }).join('');
+      }else{
+        html=os.map(function(o){
+          return `<option value="${esc(o.v)}" ${String(v==null?'':v)===String(o.v)?'selected':''}>${esc(o.l)}</option>`;}).join('');
+      }
+      return `<div class="f" data-fw="${f.k}">${lab}<select id="${id}">${html}</select>${hint}</div>`;
+    }
+    case 'chips': {
+      var sel=arr(v); var av=optsOf(typeof f.opts==='function'?f.opts(V):f.opts);
+      return `<div class="f" data-fw="${f.k}">${lab}<div class="chips" id="${id}">${av.map(function(o){
+        return `<button type="button" class="chip ${sel.indexOf(o.v)>=0?'on':''}" data-val="${esc(o.v)}">${esc(o.l)}</button>`;}).join('')}</div>${hint}</div>`;
+    }
+    case 'check':
+      return `<div class="f" data-fw="${f.k}" style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="${id}" ${v?'checked':''} style="width:20px;height:20px;accent-color:var(--accent)">
+        <label for="${id}" style="margin:0;font-size:14px;color:var(--fg)">${esc(f.l)}</label>${f.hint?`<span class="hint" style="margin:0">${esc(f.hint)}</span>`:''}</div>`;
+    case 'links': /* [{label,url,note}] */
+      return subList(f,V,'links');
+    case 'pairs': /* [{a,b}] */
+      return subList(f,V,'pairs');
+    case 'list': /* ['文本'] */
+      return subList(f,V,'list');
+    case 'row':
+      return `<div class="f-row">${f.cols.map(function(c){ return fieldInput(c,V); }).join('')}</div>`;
+    default: {
+      var type = f.t==='money'?'number':(f.t||'text');
+      var extra = '';
+      if(f.t==='number'||f.t==='money') extra=' inputmode="decimal" step="any" min="0"';
+      if(f.t==='money'){
+        return `<div class="f" data-fw="${f.k}" style="position:relative">${lab}
+          <input id="${id}" type="number" inputmode="decimal" step="any" min="0" value="${esc(v==null?'':v)}" placeholder="${esc(f.ph||'0')}">
+          <span class="muted" style="position:absolute;right:11px;top:26px">元</span>${hint}</div>`;
+      }
+      return `<div class="f" data-fw="${f.k}">${lab}<input id="${id}" type="${type}"${extra} value="${esc(v==null?'':v)}" placeholder="${esc(f.ph||'')}">${hint}</div>`;
+    }
+  }
+}
+function subList(f,V,kind){
+  var rows=arr(V[f.k]);
+  var lab=`<label>${esc(f.l)}${f.req?'<span class="req"> *</span>':''}</label>`;
+  var inner='';
+  if(kind==='list'){
+    inner=rows.map(function(r,i){
+      return `<div class="sub-item"><input data-sub="${f.k}:${i}" value="${esc(r)}" placeholder="${esc(f.ph||'')}"><button type="button" class="del" data-subdel="${f.k}:${i}">×</button></div>`;
+    }).join('');
+  }else{
+    var c1=f.c1||'名称', c2=f.c2||'链接';
+    inner=rows.map(function(r,i){
+      if(kind==='links'){
+        return `<div class="sub-item"><input data-sub="${f.k}:${i}:a" value="${esc(r.label||r.a||'')}" placeholder="${esc(c1)}">
+          <input data-sub="${f.k}:${i}:b" value="${esc(r.url||r.b||'')}" placeholder="${esc(c2)}">
+          <input data-sub="${f.k}:${i}:c" value="${esc(r.note||'')}" placeholder="备注">
+          <button type="button" class="del" data-subdel="${f.k}:${i}">×</button></div>`;
+      }
+      return `<div class="sub-item"><input data-sub="${f.k}:${i}:a" value="${esc(r.a||r.label||'')}" placeholder="${esc(c1)}">
+        <input data-sub="${f.k}:${i}:b" value="${esc(r.b||r.url||'')}" placeholder="${esc(c2)}">
+        <button type="button" class="del" data-subdel="${f.k}:${i}">×</button></div>`;
+    }).join('');
+  }
+  return `<div class="f" data-fw="${f.k}">${lab}<div class="sub-list">${inner||'<div class="tiny muted" style="padding:4px">暂无</div>'}
+    <button type="button" class="btn sm gray" data-subadd="${f.k}" style="margin:6px 0 2px">＋ 添加</button></div>
+    ${f.hint?`<div class="hint">${esc(f.hint)}</div>`:''}</div>`;
+}
+/**
+ * openForm({ title, fields, values, onSave })
+ * fields: [{k,l,t,req,opts,ph,hint,show,t:'row',cols:[...] }]
+ */
+function openForm(cfg){
+  var V={};
+  (cfg.fields||[]).forEach(function(f){ collectDefaults(f); });
+  function collectDefaults(f){
+    if(f.t==='row'||f.t==='group'){ (f.cols||[]).forEach(collectDefaults); return; }
+    var base = cfg.values?cfg.values[f.k]:undefined;
+    if(f.t==='chips') V[f.k]=arr(base).slice();
+    /* 1.1.2 修复：t:'list' 的元素是字符串（如试装记录 fittings），
+       原先一起走 Object.assign({},x) 会把字符串拆成 {0:'a',1:'b'...}，渲染成 [object Object] 且不可逆 */
+    else if(f.t==='list') V[f.k]=arr(base).map(function(x){ return (x&&typeof x==='object')?Object.assign({},x):x; });
+    else if(f.t==='links'||f.t==='pairs') V[f.k]=arr(base).map(function(x){ return Object.assign({},x); });
+    else if(f.t==='check') V[f.k]=!!base;
+    else V[f.k]= (base===undefined||base===null)?(f.def!==undefined?f.def:''):base;
+  }
+  function visible(f){ return f.show? !!f.show(V) : true; }
+  var openGroups={};                       /* 折叠分组展开状态，重渲染时保留 */
+  function rememberGroups(){
+    var mm=document.getElementById('modal'); if(!mm) return;
+    mm.querySelectorAll('details[data-group]').forEach(function(d){ openGroups[d.getAttribute('data-group')]=d.open; });
+  }
+  function syncSelectDefaults(){
+    /* 必填 select 不渲染空选项：DOM 显示第一项而模型为空会卡死保存，渲染前先对齐 */
+    /* v1.2.2.2（P2-4）：进 row/group 先看它自己的 show —— 收起的行/组里的字段渲染时不出现，
+       就不该被"兜底"写值（与 walk() 的过滤口径对齐） */
+    var walk=function(f){
+      if(f.t==='row'||f.t==='group'){
+        if(f.show && !f.show(V)) return;
+        (f.cols||[]).forEach(walk); return;
+      }
+      if(f.t!=='select') return;
+      if(!visible(f)) return;
+      var os=optsOf(typeof f.opts==='function'?f.opts(V):f.opts);
+      if(!os.length) return;
+      var cur=V[f.k];
+      if(cur===''||cur===null||cur===undefined){ if(f.req) V[f.k]=os[0].v; return; }   /* 原逻辑：只对必填兜底 */
+      /* 1.1.2 新增：当前值已不在选项里（源实体被删 / 类别切换）时，浏览器会显示第一项但模型还是旧值，
+         造成"看到的 ≠ 保存的"。有空选项就置空，否则落到第一项。 */
+      var hit=false,hasEmpty=false;
+      for(var i=0;i<os.length;i++){ if(String(os[i].v)===String(cur)) hit=true; if(os[i].v==='') hasEmpty=true; }
+      if(!hit) V[f.k]=hasEmpty?'':os[0].v;
+    };
+    (cfg.fields||[]).forEach(walk);
+  }
+  function renderCols(cols){
+    return cols.map(function(f){
+      if(f.t==='row'){
+        if(!visible(f)) return '';
+        var rc=(f.cols||[]).filter(visible);
+        if(!rc.length) return '';
+        return `<div class="f-row">${rc.map(function(c){return fieldInput(c,V);}).join('')}</div>`;
+      }
+      if(f.t==='group'){
+        if(!visible(f)) return '';
+        var gc=(f.cols||[]).filter(visible);
+        if(!gc.length) return '';
+        return `<details class="dd" data-group="${esc(f.k)}" ${openGroups[f.k]||f.open?'open':''}>
+          <summary>${esc(f.l)}<span class="muted tiny">　${gc.length} 项，可跳过</span></summary>
+          ${gc.map(function(c){ return c.t==='row'? renderCols([c]) : fieldInput(c,V); }).join('')}</details>`;
+      }
+      return fieldInput(f,V);
+    }).join('');
+  }
+  function applyDerives(){
+    /* v1.2.2：字段可以声明 derive(V) 在每次渲染前自动补另一格（只在联动源变化后跑，不覆盖用户已填的值）
+       v1.2.2.2（P2-4）：整行/整组被 show 收起时，里面的 derive 一律不跑 ——
+       否则「约人」表单里藏起来的 V.date 会被约定时间偷偷写上日期，跟 walk() 的口径也对不上 */
+    var walk=function(f){
+      if(f.t==='row'||f.t==='group'){
+        if(f.show && !f.show(V)) return;
+        (f.cols||[]).forEach(walk); return;
+      }
+      if(f.derive && visible(f)) f.derive(V);
+    };
+    (cfg.fields||[]).forEach(walk);
+  }
+  function body(){
+    applyDerives();
+    syncSelectDefaults();
+    return renderCols((cfg.fields||[]).filter(function(f){
+      return (f.t==='row'||f.t==='group') ? visible(f) && (f.cols||[]).some(visible) : visible(f);
+    }))
+      + `<div class="btn-row" style="margin-top:16px">
+          <button class="btn gray" id="fCancel">取消</button>
+          <button class="btn" id="fSave">${esc(cfg.saveLabel||'保存')}</button></div>
+          ${cfg.foot||''}`;
+  }
+  function bind(m){
+    m.querySelector('#fCancel').onclick=function(){ closeModal(); };
+    m.querySelectorAll('[id^=fld_]').forEach(function(el){
+      var k=el.id.slice(4), f=findField(k);
+      if(!f) return;
+      /* v1.2.2.2（P1 追加）：字段可声明 onTouch(V)，在用户**手动编辑**该字段时回调
+         （程序化写值 / derive 写入都不会触发）。用来区分"用户真改过"和"值和默认恰好一样"，
+         避免用数值相等去推断意图。 */
+      var touch=function(){ if(f.onTouch) f.onTouch(V); };
+      if(f.t==='chips'){
+        el.querySelectorAll('.chip').forEach(function(b){
+          b.onclick=function(){
+            var val=b.getAttribute('data-val'), sel=arr(V[k]);
+            var i=sel.indexOf(val); if(i>=0) sel.splice(i,1); else sel.push(val);
+            V[k]=sel; b.classList.toggle('on'); touch();
+          };
+        });
+      }else if(f.t==='check'){
+        el.onchange=function(){ V[k]=el.checked; touch(); if(f.live) rerender(); };
+      }else{
+        el.onchange=function(){ V[k]=el.value; touch(); if(f.live) rerender(); };
+        el.oninput=function(){ V[k]=el.value; touch(); };
+      }
+    });
+    m.querySelectorAll('[data-subadd]').forEach(function(b){
+      b.onclick=function(){
+        var k=b.getAttribute('data-subadd'), f=findField(k);
+        var list=arr(V[k]).slice();
+        list.push(f.t==='list'?'':{label:'',url:'',note:''});
+        if(f.t==='pairs') list[list.length-1]={a:'',b:''};
+        V[k]=list; rerender();
+      };
+    });
+    m.querySelectorAll('[data-sub]').forEach(function(inp){
+      /* 1.1.2 修复：子项原来只绑 onchange，打字后直接点「＋ 添加」会 rerender 重建 DOM，
+         onchange 尚未触发导致刚输入的内容丢失 —— 同时绑 oninput */
+      function onSub(){
+        var p=inp.getAttribute('data-sub').split(':');
+        if(p.length===2){ V[p[0]][p[1]]=inp.value; return; }
+        var f=findField(p[0]), o=V[p[0]][p[1]], part=p[2];
+        if(!o) return;
+        if(f&&f.t==='pairs'){ if(part==='a') o.a=inp.value; else if(part==='b') o.b=inp.value; }
+        else { if(part==='a') o.label=inp.value; else if(part==='b') o.url=inp.value; else o.note=inp.value; }
+      }
+      inp.onchange=onSub; inp.oninput=onSub;
+    });
+    m.querySelectorAll('[data-subdel]').forEach(function(b){
+      b.onclick=function(){ var p=b.getAttribute('data-subdel').split(':'); V[p[0]].splice(num(p[1]),1); rerender(); };
+    });
+    var sv=m.querySelector('#fSave');
+    if(sv) sv.onclick=function(){
+      var missing=null;
+      m.querySelectorAll('[data-fw]').forEach(function(d){ d.classList.remove('err'); });
+      function checkReq(f){
+        var reqd = (typeof f.req==='function')? !!f.req(V) : !!f.req;
+        if(!reqd || !visible(f)) return false;
+        var v=V[f.k];
+        if(v===null||v===undefined||v===''||(Array.isArray(v)&&!v.length)){
+          var node=m.querySelector('[data-fw="'+f.k+'"]');
+          if(node){
+            var grp=node.closest('details[data-group]');      /* 折叠区里的必填项要自己弹出来 */
+            if(grp) grp.open=true;
+            node.classList.add('err'); node.scrollIntoView({block:'center'});
+          }
+          toast('请填写：'+f.l); missing=f.k; return true;
+        }
+        return false;
+      }
+      function walk(f){
+        /* 1.2.2：整行/整组被 show 掉时，里面的必填不再拦保存（渲染时本来也不出现，之前会卡死保存） */
+        if(f.t==='row'||f.t==='group'){
+          if(f.show && !f.show(V)) return false;
+          for(var j=0;j<(f.cols||[]).length;j++) if(walk(f.cols[j])) return true;
+          return false;
+        }
+        return checkReq(f);
+      }
+      for(var i=0;i<cfg.fields.length;i++){ if(walk(cfg.fields[i])) return; }
+      if(missing) return;
+      /* 布局合成字段（row/group）不属于数据，统一剔除 */
+      (function strip(list){ (list||[]).forEach(function(f){ if(f.t==='row'||f.t==='group'){ delete V[f.k]; strip(f.cols); } }); })(cfg.fields);
+      closeModal();
+      cfg.onSave(V);
+    };
+  }
+  function rerender(){
+    rememberGroups();
+    var m=document.getElementById('modal');
+    m.querySelector('#mContent').innerHTML=body();
+    bind(m);
+  }
+  function findField(k){
+    for(var i=0;i<cfg.fields.length;i++){
+      var f=cfg.fields[i]; if(f.k===k) return f;
+      if(f.t==='row'||f.t==='group'){ for(var j=0;j<f.cols.length;j++){ var c=findIn(f.cols[j]); if(c) return c; } }
+    }
+    function findIn(x){
+      if(x.k===k) return x;
+      if(x.t==='row'||x.t==='group'){ for(var q=0;q<(x.cols||[]).length;q++){ var r=findIn(x.cols[q]); if(r) return r; } }
+      return null;
+    }
+    return null;
+  }
+  openModal({ title:cfg.title, body:body(), onMount:function(m){ bind(m); if(cfg.onMount) cfg.onMount(m); }, center:cfg.center });
+}
+
+/* =========================================================
+   领域层：查询助手 / 自动费用 / 级联删除
+   ========================================================= */
+function charLabel(id){
+  var c=get('characters',id); if(!c) return '通用';
+  var w=get('works',c.workId);
+  return (w?w.name+' · ':'')+c.name;
+}
+function projLabel(id){ var p=get('projects',id); return p?p.name:'未关联项目'; }
+function contactLabel(id){ var c=get('contacts',id); return c?(c.cn||'未命名'):''; }
+function locationLabel(id){ var l=get('locations',id); return l?l.name:''; }
+function sessionLabel(id){ var s=get('sessions',id); if(!s) return ''; return (s.date||'未定')+' '+(s.method||''); }
+function itemsOfProject(pid){ return DB.items.filter(function(i){ return arr(i.projectIds).indexOf(pid)>=0; }); }
+function projectsOfChar(cid){ return DB.projects.filter(function(p){ return p.characterId===cid; }); }
+function charName(cid){ var c=get('characters',cid); return c?(c.name||''):(cid?'':''); }
+function liveItems(){ return DB.items.filter(function(i){ return TERMINAL_STATUS.indexOf(i.status)<0; }); }
+function usableItems(){ return DB.items.filter(function(i){ return ['试穿通过','已到货','外借中'].indexOf(i.status)>=0; }); }
+function isReadyItem(i){ return i.status==='试穿通过'; }
+/** 出物回血：合并态「报废/已售」只有子选项是"卖了"才算回血 */
+function soldBack(i){ return (i.status==='报废/已售'&&i.dispKind==='卖了')?num(i.dispPrice):0; }
+function sessionsOf(pid){ return sortDesc(DB.sessions.filter(function(s){return s.projectId===pid;}),'date'); }
+function apptsOf(pid){ return sortDesc(DB.appointments.filter(function(a){return a.projectId===pid;}),'datetime'); }
+function expsOf(pid){ return sortDesc(DB.expenses.filter(function(e){return e.projectId===pid;}),'date'); }
+function todosOf(pid){ return DB.todos.filter(function(t){return !pid||t.projectId===pid;}); }
+function delivsOf(sid){ return DB.deliverables.filter(function(d){return d.sessionId===sid;}); }
+function pubsOf(pid){ return sortDesc(DB.publications.filter(function(p){return p.projectId===pid;}),'date'); }
+function overdueDelivs(){
+  return DB.deliverables.filter(function(d){
+    var ses=get('sessions',d.sessionId);
+    if(ses && ses.status==='已取消') return false;   /* 拍摄已取消，不该再催片 */
+    return d.agreedDate && isPast(d.agreedDate) && d.status!=='已返图';
+  });
+}
+function itemCostInProject(pid){ var t=0; itemsOfProject(pid).forEach(function(i){ t+=num(i.price); }); return t; }
+function refLinks(list){ /* 渲染参考链接（本期不传图，只存链接） */
+  var a=arr(list).filter(function(x){ return x && (x.url||x.label); });
+  if(!a.length) return '<div class="muted tiny">未记录（本期不上传图片，可粘贴网盘/图床/微博链接）</div>';
+  return a.map(function(x){
+    return `<div class="kv"><div class="k">${esc(x.label||'链接')}</div><div class="v">${
+      x.url?(/^https?:\/\//i.test(x.url)?`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>`:esc(x.url)):'—'
+    }${x.note?`<div class="tiny muted">${esc(x.note)}</div>`:''}</div></div>`;
+  }).join('');
+}
+
+/* ---- 自动费用：以 autoKey 幂等，改一处不重复记账 ---- */
+function aKey(t,id,slot){ return t+':'+id+':'+slot; }
+function upsertAuto(key,data){
+  var idx=-1;
+  for(var j=0;j<DB.expenses.length;j++) if(DB.expenses[j].autoKey===key){ idx=j; break; }
+  if(!data || num(data.amount)<=0){ if(idx>=0) DB.expenses.splice(idx,1); return; }
+  if(idx>=0){
+    var old=DB.expenses[idx];
+    DB.expenses[idx]=Object.assign(old,data,{autoKey:key,source:'自动'});
+  }else{
+    DB.expenses.push(Object.assign({id:uid('e'),autoKey:key,source:'自动'},data));
+  }
+}
+function dropAutoPrefix(prefix){
+  DB.expenses = DB.expenses.filter(function(e){ return String(e.autoKey||'').indexOf(prefix)!==0; });
+}
+function expCatOfItem(it){
+  var k=it.kind||'C服';
+  return EXPENSE_CATS.indexOf(k)>=0?k:'其他';
+}
+function syncItemExpense(it){
+  var key=aKey('item',it.id,'buy');
+  var charged = num(it.price)>0 && it.status!=='愿望单/购物车';
+  if(!charged){ upsertAuto(key,null); return; }
+  upsertAuto(key,{
+    projectId:arr(it.projectIds)[0]||null,
+    date: it.orderDate||it.arrivedDate||todayISO(),
+    category: expCatOfItem(it), amount: num(it.price),
+    note:'装备·'+(it.name||''), refType:'item', refId:it.id
+  });
+}
+function syncApptExpense(a){
+  var paid = ['已付定金','已完成','已结清'].indexOf(a.status)>=0;
+  var done = ['已完成','已结清'].indexOf(a.status)>=0;
+  var APPT_CAT={ '妆娘':'妆造','毛娘':'妆造','修图师':'后期修图','场地预定':'场地','摄影师':'摄影' };
+  var cat=APPT_CAT[a.type]||'其他';
+  var pid=a.projectId||null, base={projectId:pid, category:cat, refType:'appointment', refId:a.id};
+  var dep=num(a.deposit), fee=num(a.fee), bal=fee-dep;
+  if(a.status==='已结清'){
+    /* 结清：定金按已付入账，尾款补差，总额=fee */
+    upsertAuto(aKey('appt',a.id,'deposit'), Object.assign({},base,{amount:dep,date:(a.datetime||'').slice(0,10)||todayISO(),note:'定金·'+cnOf(a)}));
+    upsertAuto(aKey('appt',a.id,'balance'), bal>0?Object.assign({},base,{amount:bal,date:todayISO(),note:'尾款·'+cnOf(a)}):null);
+  }else if(a.status==='已完成'){
+    upsertAuto(aKey('appt',a.id,'deposit'), Object.assign({},base,{amount:dep,date:(a.datetime||'').slice(0,10)||todayISO(),note:'定金·'+cnOf(a)}));
+    upsertAuto(aKey('appt',a.id,'balance'), null);   /* 尾款未结，不计 */
+  }else if(paid){
+    upsertAuto(aKey('appt',a.id,'deposit'), Object.assign({},base,{amount:dep,date:(a.datetime||'').slice(0,10)||todayISO(),note:'定金·'+cnOf(a)}));
+    upsertAuto(aKey('appt',a.id,'balance'), null);
+  }else if(['已取消','爽约'].indexOf(a.status)>=0){
+    /* 1.1.2 修复：原先这里会走到下面的 else 把定金流水删掉，与注释矛盾、且定金已付出通常不退 → 少算钱。
+       现在改为保留定金入账（备注标明未退，用户可手动删除），尾款不记。 */
+    upsertAuto(aKey('appt',a.id,'deposit'),
+      dep>0?Object.assign({},base,{amount:dep,date:(a.datetime||'').slice(0,10)||todayISO(),note:'定金(未退)·'+cnOf(a)}):null);
+    upsertAuto(aKey('appt',a.id,'balance'), null);
+  }else{
+    upsertAuto(aKey('appt',a.id,'deposit'), null);
+    upsertAuto(aKey('appt',a.id,'balance'), null);
+  }
+}
+function cnOf(a){ var c=contactLabel(a.contactId); return (a.type||'')+(c?('·'+c):''); }
+/* 联系人身份 → 预约单类型（一定落在 APPT_TYPES 内，避免被下拉兜底成"妆娘"） */
+var ROLE_TO_APPT={ '妆娘':'妆娘','毛娘':'毛娘','摄影师':'摄影师','修图师':'修图师','场地主':'场地预定' };
+function apptTypeOf(contact){
+  var rs=arr(contact&&contact.roles);
+  for(var i=0;i<rs.length;i++) if(ROLE_TO_APPT[rs[i]]) return ROLE_TO_APPT[rs[i]];
+  return '其他';
+}
+function newApptFor(cid){
+  var c=get('contacts',cid);
+  formAppt(null,{contactId:cid, type:c?apptTypeOf(c):'妆娘'});
+}
+function syncSessionExpense(s){
+  var base={projectId:s.projectId||null, category:'摄影', refType:'session', refId:s.id};
+  var dep=num(s.deposit), fee=num(s.fee), bal=fee-dep;
+  var d=(s.date||'')||todayISO();
+  /* 「已付定金」填了即代表钱已出去，不等状态推进 */
+  if(dep>0){
+    upsertAuto(aKey('sess',s.id,'deposit'), Object.assign({},base,{amount:dep,date:d,note:'摄影定金'}));
+  }else upsertAuto(aKey('sess',s.id,'deposit'), null);
+  if(s.status==='已完成'){
+    upsertAuto(aKey('sess',s.id,'fee'), bal>0?Object.assign({},base,{amount:bal,date:d,note:'摄影尾款'}):null);
+  }else upsertAuto(aKey('sess',s.id,'fee'), null);
+}
+function syncAllAutoExpenses(){
+  DB.items.forEach(syncItemExpense);
+  DB.appointments.forEach(syncApptExpense);
+  DB.sessions.forEach(syncSessionExpense);
+  save();
+}
+
+/* ---- 级联删除 ---- */
+function deleteProject(p){
+  var pids=sessionsOf(p.id).map(function(s){return s.id;});
+  DB.deliverables=DB.deliverables.filter(function(d){ return pids.indexOf(d.sessionId)<0; });
+  DB.sessions=DB.sessions.filter(function(s){ return s.projectId!==p.id; });
+  DB.appointments=DB.appointments.filter(function(a){ return a.projectId!==p.id; });
+  DB.publications=DB.publications.filter(function(x){ return x.projectId!==p.id; });
+  DB.todos=DB.todos.filter(function(t){ return t.projectId!==p.id; });
+  DB.expenses=DB.expenses.filter(function(e){ return e.projectId!==p.id; });
+  DB.items.forEach(function(i){ i.projectIds=arr(i.projectIds).filter(function(x){return x!==p.id;}); });
+  del('projects',p.id);
+  /* 装备仍在，重新生成其自动流水，避免流水凭空消失 */
+  DB.items.forEach(syncItemExpense);
+  save();
+}
+function deleteSession(s){
+  DB.deliverables=DB.deliverables.filter(function(d){ return d.sessionId!==s.id; });
+  dropAutoPrefix('sess:'+s.id+':');
+  del('sessions',s.id);
+}
+function deleteAppt(a){ dropAutoPrefix('appt:'+a.id+':'); del('appointments',a.id); }
+/* 1.1.2 新增：deleteAppt 原先是死代码（无任何调用点、未挂 window），建错的预约单删不掉 */
+function delApptConfirm(aid){
+  var a=get('appointments',aid); if(!a) return;
+  confirmBox('删除预约单','将删除「'+(a.type||'预约')+'·'+(contactLabel(a.contactId)||a.contactText||'待定')+'」及其自动生成的费用流水。',function(){
+    deleteAppt(a); render(); toast('已删除');
+  },'确认删除');
+}
+/* 1.1.2 新增：手动记的流水原先无法删除，记错金额只能改成 0，脏数据永久占位 */
+function delExpenseConfirm(eid){
+  var e=get('expenses',eid); if(!e) return;
+  confirmBox('删除这笔支出','将删除「'+(e.note||e.category||'')+'」'+money(e.amount)+' 元。',function(){
+    del('expenses',eid); render(); toast('已删除');
+  },'确认删除');
+}
+/* 1.1.2 新增：交付物 / 发布记录 / 角色 原先都只能建不能删 */
+function delDelivConfirm(did){
+  var d=get('deliverables',did); if(!d) return;
+  confirmBox('删除交付物','将删除这条「'+(d.type||'')+'」交付记录。',function(){
+    DB.publications.forEach(function(b){ if(b.deliverableId===did) b.deliverableId=''; });
+    del('deliverables',did); render(); toast('已删除');
+  },'确认删除');
+}
+function delPubConfirm(bid){
+  var b=get('publications',bid); if(!b) return;
+  confirmBox('删除发布记录','将删除「'+(b.platform||'')+(b.date?' · '+b.date:'')+'」这条发布记录。',function(){
+    del('publications',bid); render(); toast('已删除');
+  },'确认删除');
+}
+function delCharConfirm(cid){
+  var c=get('characters',cid); if(!c) return;
+  var ps=DB.projects.filter(function(p){ return p.characterId===cid; });
+  if(ps.length){ toast('这个角色下还有 '+ps.length+' 个出装项目，请先移走或删除那些项目'); return; }
+  confirmBox('删除角色','将删除「'+(c.name||'未命名')+'」。',function(){
+    DB.items.forEach(function(i){ if(i.characterId===cid) i.characterId=''; });
+    del('characters',cid); render(); toast('已删除');
+  },'确认删除');
+}
+function deleteItem(i){
+  i.projectIds=[];
+  dropAutoPrefix('item:'+i.id+':');
+  DB.sessions.forEach(function(s){ s.checklist=arr(s.checklist).filter(function(c){ return c.itemId!==i.id; }); });
+  del('items',i.id);
+}
+function nextStatusOpts(cur){
+  cur=cur||'愿望单/购物车';
+  if(ITEM_STATUS.indexOf(cur)<0) cur='愿望单/购物车';
+  var nxt=arr(STATUS_NEXT[cur]);
+  var os=[{v:cur,l:cur+'（当前）',g:'—'}];
+  nxt.forEach(function(s){ os.push({v:s,l:s,g:'按状态机可推进到'}); });
+  ITEM_STATUS.forEach(function(s){ if(s!==cur && nxt.indexOf(s)<0) os.push({v:s,l:s,g:'强制跳转（录错纠正用）'}); });
+  return os;
+}
+/* 只有这两个状态需要「去向 CN」：报废/已售 要记卖给谁/谁收的，外借中 要记借给谁 */
+function isDisposalStatus(st){ return ['报废/已售','外借中'].indexOf(st)>=0; }
+
+/* =========================================================
+   实体表单
+   ========================================================= */
+function formWork(id){
+  var cur=id?get('works',id):{type:'游戏'};
+  openForm({
+    title:id?'编辑作品':'新建作品',
+    values:cur,
+    fields:[
+      {k:'name',l:'作品名',req:1,ph:'如：原神 / 明日方舟 / 崩坏：星穹铁道'},
+      {k:'type',l:'类型',t:'select',opts:WORK_TYPES},
+      {k:'note',l:'备注',t:'area'}
+    ],
+    onSave:function(V){
+      var o=Object.assign({},cur,{name:String(V.name).trim(),type:V.type||'游戏',note:V.note||''});
+      o.id=cur.id||uid('w'); put('works',o); render(); toast('已保存作品');
+    }
+  });
+}
+function findOrCreateWork(name,type){
+  name=String(name||'').trim(); if(!name) return null;
+  for(var i=0;i<DB.works.length;i++) if(DB.works[i].name===name) return DB.works[i];
+  var w={id:uid('w'),name:name,type:type||'其他',note:''}; DB.works.push(w); return w;
+}
+function charSelectOpts(){
+  var os=DB.characters.slice().sort(function(a,b){ return charLabel(a.id).localeCompare(charLabel(b.id),'zh'); })
+    .map(function(c){ return {v:c.id,l:charLabel(c.id)}; });
+  os.push({v:'__new',l:'＋ 新建角色…'});
+  return os;
+}
+function formCharacter(id,presetWorkId){
+  var cur=id?get('characters',id):{workId:presetWorkId||''};
+  openForm({
+    title:id?'编辑角色':'新建角色',
+    values:cur,
+    fields:[
+      {k:'workId',l:'所属作品',t:'select',opts:function(){ var o=DB.works.map(function(w){return {v:w.id,l:w.name};}); o.push({v:'__new',l:'＋ 新建作品…'}); return o; },req:1,live:1},
+      {k:'newWork',l:'新作品名',show:function(V){return V.workId==='__new';},req:function(V){return V.workId==='__new';}},
+      {k:'newWorkType',l:'新作品类型',t:'select',opts:WORK_TYPES,show:function(V){return V.workId==='__new';}},
+      {k:'name',l:'角色名',req:1,ph:'如：芙宁娜'},
+      {k:'note',l:'设定/还原要点',t:'area',hint:'发型、瞳色、关键装饰等还原要点，便于置装时核对'}
+    ],
+    onSave:function(V){
+      var wid=V.workId;
+      if(wid==='__new'){ var w=findOrCreateWork(V.newWork,V.newWorkType); wid=w?w.id:''; }
+      var o=Object.assign({},cur,{workId:wid,name:String(V.name).trim(),note:V.note||''});
+      o.id=cur.id||uid('c'); put('characters',o); save(); render(); toast('已保存角色');
+    }
+  });
+}
+/* ---------- 项目（出装计划） ---------- */
+function formProject(id,preset){
+  var cur=id?get('projects',id):Object.assign({stage:'计划中',restore:'中'},preset||{});
+  if(!id && !cur.name){
+    cur.name = cur.characterId ? charLabel(cur.characterId)+(cur.skin?'·'+cur.skin:'') : '';
+  }
+  openForm({
+    title:id?'编辑项目':'新建出装项目',
+    values:cur,
+    fields:[
+      {k:'characterId',l:'出谁',t:'select',opts:charSelectOpts,req:1,live:1},
+      {k:'newWork',l:'新作品名',show:function(V){return V.characterId==='__new';},req:function(V){return V.characterId==='__new';}},
+      {k:'newChar',l:'新角色名',show:function(V){return V.characterId==='__new';},req:function(V){return V.characterId==='__new';}},
+      {k:'skin',l:'哪套皮肤/形态',ph:'如：常驻 / 皮肤名 / 第二形态',show:function(V){return V.characterId!=='__new';}},
+      {k:'name',l:'项目名',ph:'不填就自动用「作品·角色·皮肤」'},
+      {k:'row1',t:'row',cols:[
+        {k:'stage',l:'阶段',t:'select',opts:STAGES,req:1,hint:'三类，可来回切'},
+        {k:'deadline',l:'什么时候要用',t:'date',hint:'漫展日 / 交付日'}
+      ]},
+      {k:'g_plan',t:'group',l:'再细一点（可跳过）',cols:[
+        {k:'occasion',l:'目标场合',t:'select',opts:OCCASIONS},
+        {k:'row2',t:'row',cols:[
+          {k:'restore',l:'还原度目标',t:'select',opts:RESTORE_TARGETS},
+          {k:'budget',l:'预算上限',t:'money'}
+        ]},
+        {k:'archived_at',l:'归档日期',t:'date'},
+        {k:'refLinks',l:'参考链接',t:'links',c1:'说明',c2:'链接',hint:'立绘/设定图/他人返图的网盘或图床链接（本期不上传图片文件）'},
+        {k:'note',l:'备注',t:'area'}
+      ]}
+    ],
+    onSave:function(V){
+      var cid=V.characterId;
+      if(cid==='__new'){
+        var w=findOrCreateWork(V.newWork,'其他');
+        var c={id:uid('c'),workId:w?w.id:'',name:String(V.newChar||'').trim(),note:''};
+        DB.characters.push(c); save(); cid=c.id;
+      }
+      var o=Object.assign({},cur,V,{
+        characterId:cid,
+        name:String(V.name||'').trim()||charLabel(cid)+(V.skin?'·'+V.skin:''),
+        budget:numOrNull(V.budget), refLinks:arr(V.refLinks).filter(function(x){return x.url||x.label;}),
+        updated_at:nowStamp()
+      });
+      ['row1','row2','g_plan','newWork','newChar'].forEach(function(k){ delete o[k]; });
+      o.id=cur.id||uid('p'); put('projects',o); render();
+      toast('项目已保存');
+      if(!id) go('project',{projectId:o.id,tab:'projects'});
+    }
+  });
+}
+/* ---------- 装备（C服/道具/假发/美瞳…共用一张台账） ---------- */
+/** v1.2.2：装备名字不重要 —— 留空时按「角色 · 分类（没有分类就用大类）」拼一个，别为了起名卡住录入
+    v1.2.2.2（P2-6）：重名时自动加序号，否则同角色两件同类装备在列表/清单里长得一模一样、分不清 */
+function autoItemName(V,cid,selfId){
+  var who=charName(cid)||'通用';
+  var what=V.category||V.kind||'装备';
+  var base=who+'·'+what, name=base, n=1;
+  while(DB.items.some(function(i){ return i && i.id!==selfId && i.name===name; })){ n++; name=base+' '+n; }
+  return name;
+}
+function formItem(id,preset){
+  var cur=id?Object.assign({},get('items',id)):{kind:'C服',status:'愿望单/购物车',source:'购买'};
+  /* 1.1.2 修复：原先只在新建态应用 preset，导致「推进到报废/已售」这类入口传进来的目标状态被丢弃 */
+  if(preset) Object.assign(cur,preset);
+  var isNew=!id;
+  openForm({
+    title:id?'编辑装备':'加一件装备',
+    values:cur,
+    fields:[
+      {k:'name',l:'叫什么',ph:'如：芙宁娜裙装 / 雨果大剑',hint:'留空也行，保存时按「角色 · 类别」自动起名'},
+      {k:'rowA',t:'row',cols:[
+        {k:'kind',l:'哪一类',t:'select',opts:ASSET_KINDS,req:1,live:1},
+        {k:'status',l:'现在到哪一步',t:'select',opts:function(V){return nextStatusOpts(V.status);},live:1,req:1}
+      ]},
+      {k:'characterId',l:'哪个角色（或通用）',t:'select',opts:function(){ var o=charSelectOpts(); o.unshift({v:'',l:'通用（不限角色）'}); return o; },live:1},
+      {k:'newWork',l:'新作品名',show:function(V){return V.characterId==='__new';},req:function(V){return V.characterId==='__new';}},
+      {k:'newChar',l:'新角色名',show:function(V){return V.characterId==='__new';},req:function(V){return V.characterId==='__new';}},
+      {k:'projectIds',l:'用在哪个出装',t:'chips',opts:function(){ return DB.projects.map(function(p){return {v:p.id,l:p.name};}); },
+        /* v1.2.2 联动：这个角色只有一个出装时直接勾上，少点一次 */
+        derive:function(V){
+          if(!V.characterId||V.characterId==='__new') return;
+          if(arr(V.projectIds).length) return;
+          var ps=projectsOfChar(V.characterId);
+          if(ps.length===1) V.projectIds=[ps[0].id];
+        },
+        hint:'不选也可以，之后在项目里「关联已有装备」；角色只有一个出装时会自动勾上'},
+      {k:'rowC',t:'row',cols:[
+        {k:'price',l:'花了多少钱',t:'money'},
+        {k:'size',l:'尺码',ph:'S / 38码'}
+      ]},
+      {k:'storage',l:'放在哪儿',ph:'如：衣柜2层左 / 道具箱A'},
+      /* 处置 / 外借（必须区分去向 CN）——可能必填，留在主区 */
+      {k:'dispKind',l:'最后怎么了',t:'select',opts:DISP_KINDS,req:1,live:1,show:function(V){return V.status==='报废/已售';},hint:'只有「卖了」的钱算进回血，报废与已归还只记去向'},
+      {k:'dispTo',l:'去向（买家/借给谁/收物人 CN）',req:function(V){return isDisposalStatus(V.status);},show:function(V){return isDisposalStatus(V.status);},hint:'出了、坏了、借给谁都记个名字，以后不重复买、也查得到'},
+      {k:'dispRow',t:'row',cols:[
+        {k:'dispDate',l:'日期',t:'date'},
+        {k:'dispPrice',l:'卖了多少钱',t:'money',show:function(V){return V.dispKind==='卖了';}}
+      ],show:function(V){return isDisposalStatus(V.status);}},
+      {k:'dispReason',l:'原因/说明',req:function(V){return V.dispKind==='报废';},show:function(V){return isDisposalStatus(V.status);},ph:'如：不合身 / 吃灰回血 / 破损不可修'},
+      {k:'g_buy',t:'group',l:'在哪买的、什么时候到',cols:[
+        {k:'source',l:'来源',t:'select',opts:ASSET_SOURCES,live:1},
+        {k:'shop',l:'渠道/店铺',ph:'店铺名 / 平台 / 制作者'},
+        {k:'link',l:'商品链接',t:'url'},
+        {k:'rowD',t:'row',cols:[
+          {k:'orderDate',l:'下单日期',t:'date'},
+          {k:'arrivedDate',l:'到手日期',t:'date'}
+        ]}
+      ]},
+      {k:'g_kind',t:'group',l:'这一类的细节',cols:[
+        {k:'category',l:'分类',t:'select',opts:function(V){return ASSET_CATS[V.kind]||[];}},
+        {k:'mkRow',t:'row',cols:[
+          {k:'makeStage',l:'自制阶段',t:'select',opts:MAKE_STAGES},
+          {k:'makeProgress',l:'进度 %',t:'number',ph:'0-100'}
+        ],show:function(V){return V.kind==='道具'||V.source==='自制'||V.source==='代工';}},
+        {k:'fragile',l:'易损/运输注意',show:function(V){return V.kind==='道具';},ph:'如：翅膀不可折叠，需专车'},
+        {k:'wigRow',t:'row',cols:[
+          {k:'wigColor',l:'毛色',ph:'如：白偏银'},
+          {k:'wigLen',l:'长度',ph:'如：40cm'}
+        ],show:function(V){return V.kind==='假发';}},
+        {k:'wigRow2',t:'row',cols:[
+          {k:'wigStyle',l:'造型状态',t:'select',opts:['未剪','已造型','需补造型']},
+          {k:'wigBy',l:'造型归属',ph:'自剪 / 某毛娘CN'}
+        ],show:function(V){return V.kind==='假发';}},
+        {k:'clRow',t:'row',cols:[
+          {k:'clBrand',l:'品牌/花色'},
+          {k:'clDia',l:'直径',ph:'14.0'}
+        ],show:function(V){return V.kind==='美瞳';}},
+        {k:'clRow2',t:'row',cols:[
+          {k:'powerL',l:'左眼度数',ph:'0 / -3.00'},
+          {k:'powerR',l:'右眼度数',ph:'0 / -3.25'}
+        ],show:function(V){return V.kind==='美瞳';}},
+        {k:'clRow3',t:'row',cols:[
+          {k:'throwType',l:'抛型',t:'select',opts:['日抛','双周抛','月抛','半年抛','年抛']},
+          {k:'openedAt',l:'开封日期',t:'date'},
+          {k:'expiresAt',l:'到期日期',t:'date'}
+        ],show:function(V){return V.kind==='美瞳';}},
+        {k:'qtyRow',t:'row',cols:[
+          {k:'qty',l:'数量',t:'number'},
+          {k:'lowQty',l:'低于几个提醒我',t:'number'}
+        ],show:function(V){return V.kind==='消耗品';}}
+      ]},
+      {k:'g_more',t:'group',l:'精细记录（可跳过）',cols:[
+        {k:'fittings',l:'试装记录',t:'list',ph:'2026-08-01 袖子改短3cm（待改）'},
+        {k:'refLinks',l:'参考/实拍链接',t:'links',c1:'说明',c2:'链接',hint:'不传图，贴网盘或图床链接即可'},
+        {k:'note',l:'备注',t:'area'}
+      ]}
+    ],
+    onSave:function(V){
+      var cid=V.characterId;
+      if(cid==='__new'){
+        var w=findOrCreateWork(V.newWork,'其他');
+        var c={id:uid('c'),workId:w?w.id:'',name:String(V.newChar||'').trim(),note:''};
+        DB.characters.push(c); cid=c.id;
+      }else if(cid==='通用'||cid===undefined) cid='';
+      /* 1.1.2 修复：①类别换了旧分类不再合法则清空，避免出现「美瞳 / 连衣裙」这种脏组合
+                     ②离开处置/外借态时清掉去向与售价，避免列表残留「去向：xxx」 */
+      if((ASSET_CATS[V.kind]||[]).indexOf(V.category)<0) V.category='';
+      /* v1.2.2.2（P2-1）：外借中 也是 isDisposalStatus，但它不该留着「卖了/售价」——
+         否则详情页会显示「回血 150 元」而首页 soldBack 又不算，两处口径打架 */
+      if(V.status==='外借中'){ V.dispKind=''; V.dispPrice=null; V.dispReason=''; }
+      else if(!isDisposalStatus(V.status)){ V.dispTo=''; V.dispDate=''; V.dispPrice=null; V.dispReason=''; V.dispKind=''; }
+      else if(V.dispKind!=='卖了') V.dispPrice=null;
+      var autoName=!String(V.name||'').trim();
+      var o=Object.assign({},cur,V,{
+        id:cur.id||uid('i'),
+        name:autoName?autoItemName(V,cid,cur.id):String(V.name).trim(),
+        characterId:cid,
+        projectIds:arr(V.projectIds),
+        price:numOrNull(V.price), dispPrice:numOrNull(V.dispPrice),
+        makeProgress:V.makeProgress===''||V.makeProgress==null?null:Math.max(0,Math.min(100,num(V.makeProgress))),
+        qty:numOrNull(V.qty), lowQty:numOrNull(V.lowQty),
+        dispType:isDisposalStatus(V.status)?(V.status==='外借中'?'外借':V.dispKind):'',
+        fittings:arr(V.fittings).filter(Boolean),
+        refLinks:arr(V.refLinks).filter(function(x){return x.url||x.label;}),
+        status:V.status, updated_at:nowStamp()
+      });
+      ['rowA','rowB','rowC','rowD','g_buy','g_kind','g_more','mkRow','wigRow','wigRow2','clRow','clRow2','clRow3','qtyRow','dispRow','newWork','newChar'].forEach(function(k){ delete o[k]; });
+      put('items',o); syncItemExpense(o); save(); render();
+      toast(isNew?(autoName?'已记下：'+o.name:'已记下这件'):'已保存');
+    }
+  });
+}
+/* ---------- 联系人 ---------- */
+function formContact(id,preset){
+  var cur=id?get('contacts',id):Object.assign({roles:[],platforms:[]},preset||{});
+  openForm({
+    title:id?'编辑联系人':'新建联系人',
+    values:cur,
+    fields:[
+      {k:'cn',l:'称呼 / CN',req:1,ph:'圈内昵称或备注名'},
+      {k:'roles',l:'干什么的',t:'chips',opts:ROLES,req:1},
+      {k:'platforms',l:'平台与 ID',t:'pairs',c1:'平台(如小红书)',c2:'ID/账号',hint:'可多条；常用：'+PLATFORMS.join(' / ')},
+      {k:'phone',l:'电话/微信（选填）',ph:'敏感信息，仅存本机'},
+      {k:'warning',l:'避雷 / 谨慎合作',t:'check',live:1},
+      {k:'warnReason',l:'避雷原因',show:function(V){return !!V.warning;},req:function(V){return !!V.warning;}},
+      {k:'g_more',t:'group',l:'再记一点（可跳过）',cols:[
+        {k:'portfolio',l:'作品集链接',t:'url'},
+        {k:'priceNote',l:'价格备注',ph:'如：约拍 400/半天；妆造 150 含假毛修剪'},
+        {k:'rating',l:'合作评价',t:'select',opts:['','很好','还行','一般','不再合作']},
+        {k:'note',l:'备注（风格/雷点）',t:'area',rows:3}
+      ]}
+    ],
+    onSave:function(V){
+      var o=Object.assign({},cur,V,{id:cur.id||uid('ct'),
+        cn:String(V.cn).trim(), roles:arr(V.roles),
+        platforms:arr(V.platforms).filter(function(p){ return (p.a||p.label)||(p.b||p.url); })
+          .map(function(p){ return {label:String(p.a||p.label||'').trim(), url:String(p.b||p.url||'').trim()}; }),
+        warning:!!V.warning, updated_at:nowStamp()});
+      put('contacts',o); render();
+      if(!id) go('contact',{contactId:o.id,tab:'team'});
+      toast('已保存联系人');
+    }
+  });
+}
+/* ---------- 场地 ---------- */
+function formLocation(id,preset){
+  var cur=id?get('locations',id):Object.assign({},preset||{});
+  openForm({
+    title:id?'编辑场地':'新场地',
+    values:cur,
+    fields:[
+      {k:'name',l:'场地名',req:1,ph:'如：xx公园 / xx棚 / CP漫展'},
+      {k:'rowT',t:'row',cols:[
+        {k:'type',l:'类型',t:'select',opts:LOCATION_TYPES},
+        {k:'gather',l:'集合点',ph:'如：南门石碑'}
+      ]},
+      {k:'address',l:'地址'},
+      {k:'g_where',t:'group',l:'到场要知道的事（可跳过）',cols:[
+        {k:'rowF',t:'row',cols:[
+          {k:'fee',l:'费用',t:'money',ph:'门票/棚费'},
+          {k:'bestHours',l:'最佳时段',ph:'如：16:00-18:00 逆光'}
+        ]},
+        {k:'traffic',l:'交通/停车',t:'area',rows:2},
+        {k:'facilities',l:'设施',ph:'更衣室 / 洗手间 / 存包 / 充电'},
+        {k:'risk',l:'风险备注',t:'area',rows:2,ph:'需报备 / 保安驱赶 / 禁拍三脚架'},
+        {k:'refLinks',l:'参考图链接',t:'links',c1:'说明',c2:'链接'},
+        {k:'note',l:'备注',t:'area'}
+      ]}
+    ],
+    onSave:function(V){
+      var o=Object.assign({},cur,V,{id:cur.id||uid('l'),name:String(V.name).trim(),
+        fee:numOrNull(V.fee), refLinks:arr(V.refLinks).filter(function(x){return x.url||x.label;})});
+      delete o.rowF;
+      put('locations',o); render(); toast('已保存场地');
+      if(!id) go('location',{locationId:o.id,tab:'team'});
+    }
+  });
+}
+/* ---------- 拍摄单 ---------- */
+function formSession(id,preset){
+  var cur=id?get('sessions',id):Object.assign({status:'计划中',method:'约拍',date:todayISO()},preset||{});
+  /* 1.1.2 修复：编辑态同样应用 preset（点状态 pill「已取消/已改期」时要把目标状态带进表单） */
+  if(id&&preset) cur=Object.assign({},cur,preset);
+  openForm({
+    title:id?'编辑拍摄单':'新建拍摄单',
+    values:cur,
+    fields:[
+      {k:'projectId',l:'所属项目',t:'select',opts:function(){ return DB.projects.map(function(p){return {v:p.id,l:p.name};}); },req:1,live:1},
+      {k:'rowA',t:'row',cols:[
+        {k:'date',l:'拍摄日期',t:'date',req:1},
+        {k:'time',l:'集合时间',t:'time'}
+      ]},
+      {k:'rowB',t:'row',cols:[
+        {k:'method',l:'拍摄方式',t:'select',opts:SHOOT_METHODS,req:1},
+        {k:'status',l:'状态',t:'select',opts:SESSION_STATUS,req:1,live:1}
+      ]},
+      {k:'contactId',l:'摄影师（联系人）',t:'select',opts:function(){ var o=DB.contacts.slice().sort(function(a,b){ return (arr(b.roles).indexOf('摄影师')>=0?1:0)-(arr(a.roles).indexOf('摄影师')>=0?1:0); }).map(function(c){return {v:c.id,l:c.cn+(arr(c.roles).length?'（'+arr(c.roles).join('/')+'）':'')};}); o.unshift({v:'',l:'— 不选，手填 —'}); return o; },live:1},
+      {k:'photographerText',l:'摄影师（手填）',show:function(V){return !V.contactId;},ph:'名字或 CN'},
+      {k:'locationId',l:'场地',t:'select',opts:function(){ var o=DB.locations.map(function(l){return {v:l.id,l:l.name};}); o.unshift({v:'',l:'— 手填 —'}); return o; },live:1},
+      {k:'locationText',l:'场地（手填）',show:function(V){return !V.locationId;}},
+      {k:'changeReason',l:'改期/取消原因',show:function(V){return ['已改期','已取消'].indexOf(V.status)>=0;},req:function(V){return ['已改期','已取消'].indexOf(V.status)>=0;}},
+      {k:'g_detail',t:'group',l:'钱与当天安排（可跳过）',cols:[
+        {k:'rowD',t:'row',cols:[
+          {k:'fee',l:'拍摄费用',t:'money'},
+          {k:'deposit',l:'已付定金',t:'money'}
+        ]},
+        {k:'timeline',l:'当日时间线',ph:'如：7:00起妆 10:00到场 11:00开拍 15:00撤'},
+        {k:'backup',l:'雨备方案',t:'area',rows:2,ph:'备案场地 / 改期候选日'},
+        {k:'note',l:'备注',t:'area'}
+      ]}
+    ],
+    onSave:function(V){
+      var o=Object.assign({},cur,V,{id:cur.id||uid('s'),
+        fee:numOrNull(V.fee), deposit:numOrNull(V.deposit),
+        checklist:arr(cur.checklist), updated_at:nowStamp()});
+      ['rowA','rowB','rowC'].forEach(function(k){delete o[k];});
+      put('sessions',o); syncSessionExpense(o);
+      /* v1.2.2.2（P2-1）：项目页「＋新建拍摄单」与约人转拍摄单共用同一套"开拍即推进"的判断 */
+      var moved=nudgeStageForShoot(o);
+      save(); render();
+      toast('拍摄单已保存'+(moved?' · 项目自动转「拍摄中」':''));
+      if(!id) go('session',{sessionId:o.id,projectId:o.projectId,tab:'projects'});
+    }
+  });
+}
+/* ---------- 妆造/毛娘/修图 预约单 ---------- */
+/* ---------- 约人（v1.2.2 统一入口）：预约单 = 一张表单，类型选「摄影师」直接落成拍摄单 ---------- */
+/* v1.2.2.2（P0）：预约单状态 → 拍摄单状态。映射方向要让"钱的口径"也对得上，
+   所以「已完成」落在 `已确认`（服务做完了、但钱还没结清，不补尾款），
+   「已结清」才落到 `已完成`（尾款也记）。详见 APPT_PAID_BEFORE 的注释。 */
+var APPT_TO_SESSION={
+  '待确认':'计划中','已定档':'已确认','已付定金':'已确认',
+  '已完成':'已确认','已结清':'已完成','已取消':'已取消','爽约':'已取消','已改期':'已改期'
+};
+/* 反向映射：摄影师分支切回妆娘/毛娘时，把拍摄单状态折回预约单状态 */
+var SESSION_TO_APPT={ '计划中':'待确认','已确认':'已定档','已完成':'已完成','已改期':'已取消','已取消':'已取消' };
+/* 哪些预约单状态代表「定金这笔钱已经出去了」（syncApptExpense 的 paid 口径）：
+   待确认/已定档 钱还没动 → 转换时定金一并清掉，否则会凭空多记一笔支出 */
+var APPT_PAID_BEFORE=['已付定金','已完成','已结清','已取消','爽约'];
+/** 这个值是不是"预约单独有的状态"（不是拍摄单的状态名） */
+function isApptStatus(st){ return APPT_STATUS.indexOf(st)>=0; }
+/** v1.2.2.2（P1 追加）：转换时"状态与定金到底落什么"的唯一判定，表单/确认框/落库共用同一份口径，
+    保证"表单显示的 == 最终落库的"。
+    状态：以**表单值**为准 —— 表单已经用 APPT_TO_SESSION 把预约单口径显式搬成拍摄单口径（derive），
+      所以 o.status 是可信的；只有当它不是合法拍摄单状态时才退回按旧状态映射。
+    定金：预约单的「定金」≠拍摄单的「已付定金」（前者可能只是约定、后者 >0 立刻入账）。规则：
+      · 旧单已付款（APPT_PAID_BEFORE）→ 定金照记；
+      · 用户**手动改过**定金（depTouched）→ 以用户为准（哪怕改成的数刚好等于原约定额）；
+      · 其余（未付款、也没碰过）→ 不入账，并把被挡金额记进 gated，用于确认框提示与备注，避免信息无声消失。
+    注意：判定"改没改过"用的是显式的 touched 标记，**不是**"值和原值是否相等" —— 用户照约定金额重填同一个数，
+    也必须被当成"用户填了"。 */
+function convertVerdict(o,cur,depTouched){
+  var isConvert=!!(cur&&cur.id);
+  var fromStatus=(isConvert&&isApptStatus(cur.status))?cur.status:'';
+  var sStatus=(SESSION_STATUS.indexOf(o.status)>=0)?o.status
+              :(fromStatus?(APPT_TO_SESSION[fromStatus]||'计划中'):'计划中');
+  var paidBefore=!isConvert||APPT_PAID_BEFORE.indexOf(cur.status)>=0;
+  var origDep=numOrNull(cur.deposit), depRaw=numOrNull(o.deposit);
+  var sDeposit=(paidBefore||depTouched)?depRaw:null;
+  var gated=(!paidBefore&&origDep>0&&sDeposit===null)?origDep:0;
+  return { sStatus:sStatus, sDeposit:sDeposit, paidBefore:paidBefore, gated:gated, isConvert:isConvert };
+}
+function isShootAppt(V){ return !!V && V.type==='摄影师'; }
+function formAppt(id,preset){
+  var cur=id?Object.assign({},get('appointments',id)):Object.assign({status:'待确认',type:'妆娘'},preset||{});
+  var shoot=function(V){ return isShootAppt(V); };
+  var notShoot=function(V){ return !isShootAppt(V); };
+  /* v1.2.2.2（P0）：记住"上一次渲染时这一格是预约单口径还是拍摄单口径"。
+     之所以要记，是因为「已完成」「已取消」两个词在 APPT_STATUS 和 SESSION_STATUS 里**都存在**，
+     光看 V.status 的值分不出该不该搬，只能靠"这次跨了分支"来判断。 */
+  var wasShoot=shoot(cur);
+  /* v1.2.2.2（P1 追加 · 定金口径）：预约单的「定金」只是"约定金额"，只有状态代表已付款时才真出过钱；
+     而拍摄单的「已付定金」>0 会被 syncSessionExpense **立刻**记成一笔支出。所以把"未付款的预约单"转成
+     拍摄单时，不能把约定定金当成已付带过去，否则凭空多记一笔。做法：**切入拍摄分支时只清一次**定金输入框
+     （表单=真相），切回预约分支再还回去；用户之后填的任何金额都以用户为准（哪怕恰好等于原约定额）。
+     depTouched 由字段的 onTouch 在用户手动编辑时置位，用来区分"用户真填了"和"还是默认值"。 */
+  var paidBeforeCur=!(cur&&cur.id)||APPT_PAID_BEFORE.indexOf(cur.status)>=0;
+  var origDep=numOrNull(cur.deposit);
+  var depClearedByUs=false;
+  var depTouched=false;
+  openForm({
+    title: shoot(cur) ? (id?'改成拍摄单（摄影师）':'约摄影师 · 拍摄单') : (id?'编辑预约单':'新建预约单'),
+    values:cur,
+    fields:[
+      {k:'rowA',t:'row',cols:[
+        {k:'type',l:'约谁做什么',t:'select',opts:APPT_TYPES,req:1,live:1,hint:'选「摄影师」= 直接开一张拍摄单'},
+        /* v1.2.2.2（P0）：两个分支的状态选项集不同，切类型时必须"显式搬"状态，
+           不能再让 syncSelectDefaults 把对不上的旧状态静默重置成第一项（那会让钱记错）。
+           derive 在每次渲染前跑、早于 syncSelectDefaults，所以这里搬完后者会命中、不会再兜底。
+           搬的时机 = 跨分支（wasShoot != nowShoot），否则同分支内不动用户的选择。 */
+        {k:'status',l:'状态',t:'select',opts:function(V){return shoot(V)?SESSION_STATUS:APPT_STATUS;},req:1,live:1,
+          derive:function(V){
+            var now=shoot(V);
+            if(now!==wasShoot){
+              /* 刚跨过分支：按映射表把状态显式搬过去（已完成 ⇄ 已确认 这种差别的关键就在这一步） */
+              V.status=now?(APPT_TO_SESSION[V.status]||'计划中'):(SESSION_TO_APPT[V.status]||'待确认');
+            }else if(now){
+              if(SESSION_STATUS.indexOf(V.status)<0) V.status=APPT_TO_SESSION[V.status]||'计划中';
+            }else{
+              if(APPT_STATUS.indexOf(V.status)<0) V.status='待确认';
+            }
+            wasShoot=now;
+          }}
+      ]},
+      /* v1.2.2.2（P1-2）：没有任何项目时，这个下拉只剩一个空的「未关联」，
+         如果还强制必填就会永远存不下去 → 有可选项时才要求必填 */
+      {k:'projectId',l:'所属项目',t:'select',opts:function(){ var o=DB.projects.map(function(p){return {v:p.id,l:p.name};}); o.unshift({v:'',l:'未关联'}); return o; },live:1,req:function(V){return shoot(V)&&DB.projects.length>0;}},
+      {k:'contactId',l:'手艺人（联系人）',t:'select',opts:function(){ var o=DB.contacts.map(function(c){return {v:c.id,l:c.cn+'（'+arr(c.roles).join('/')+'）'};}); o.unshift({v:'',l:'— 不选，手填 —'}); return o; },live:1},
+      {k:'contactText',l:'手艺人（手填）',show:function(V){return !V.contactId;}},
+      /* 摄影师分支：拍摄单的字段 */
+      {k:'rowS',t:'row',show:shoot,cols:[
+        {k:'date',l:'拍摄日期',t:'date',req:1,derive:function(V){
+          /* 从预约单切过来时，约定时间里的日期与钟点直接搬到拍摄单上 */
+          if(!V.date&&V.datetime){ V.date=String(V.datetime).slice(0,10); if(!V.time) V.time=String(V.datetime).slice(11,16); }
+        }},
+        {k:'time',l:'集合时间',t:'time'}
+      ]},
+      {k:'rowM',t:'row',show:shoot,cols:[
+        {k:'method',l:'拍摄方式',t:'select',opts:SHOOT_METHODS,def:'约拍',req:function(V){return shoot(V);}},
+        {k:'locationId',l:'场地',t:'select',opts:function(){ var o=DB.locations.map(function(l){return {v:l.id,l:l.name};}); o.unshift({v:'',l:'— 手填 —'}); return o; },live:1}
+      ]},
+      {k:'locationText',l:'场地（手填）',show:function(V){return shoot(V)&&!V.locationId;},
+        derive:function(V){ if(shoot(V)&&!V.locationText&&V.place&&!V.locationId) V.locationText=V.place; }},
+      /* v1.2.2.2（P2-2）：转换已有预约单（id 存在）时不强制填原因 —— 否则「已取消/爽约」的预约单转摄影师，
+         一点保存就先被"请填写：改期/取消原因"挡住、根本看不到转换确认框。
+         新建摄影师单（非转换）仍必须填；拍摄单状态 pill（setSessionStatus）那条拦截也不动。 */
+      {k:'changeReason',l:'改期/取消原因',show:function(V){return shoot(V)&&['已改期','已取消'].indexOf(V.status)>=0;},req:function(V){return !id&&shoot(V)&&['已改期','已取消'].indexOf(V.status)>=0;}},
+      /* 其他分支：预约单的字段 */
+      {k:'rowB',t:'row',show:notShoot,cols:[
+        {k:'datetime',l:'约定时间',t:'datetime-local'},
+        {k:'place',l:'地点',ph:'上门/工作室/漫展现场'}
+      ]},
+      {k:'rowC',t:'row',cols:[
+        {k:'fee',l:'总价',t:'money'},
+        {k:'deposit',l:'定金',t:'money',hint:'拍摄单里「已付定金」>0 会立刻记一笔支出；未付款的预约单转过来时不带入',
+          onTouch:function(){ depTouched=true; },
+          derive:function(V){
+            if(shoot(V)){
+              /* 未付款的预约单 → 定金不该带进拍摄单：**只在切入拍摄分支时清一次**（用 depClearedByUs 守卫），
+                 之后用户在拍摄分支里填的任何金额（哪怕等于原约定额）都不再被清。
+                 原金额并进备注，见 saveSessionFromAppt。 */
+              if(cur.id&&!paidBeforeCur&&origDep>0&&!depClearedByUs){ V.deposit=''; depClearedByUs=true; }
+            }else if(depClearedByUs&&!depTouched&&(V.deposit===''||V.deposit===null||V.deposit===undefined)){
+              /* 又切回预约分支：把刚才清掉的约定定金还回去，别把原预约单的定金改没了 */
+              V.deposit=(origDep===null?'':origDep); depClearedByUs=false;
+            }
+          }}
+      ]},
+      {k:'g_detail',t:'group',l:'要求与参考（可跳过）',cols:[
+        {k:'paidNote',l:'付款说明',show:notShoot,ph:'如：定金微信已转，尾款现场付'},
+        {k:'requirement',l:'要求备注',t:'area',rows:3,ph:'妆面风格 / 毛型 / 时长 / 是否含睫毛'},
+        {k:'refLinks',l:'妆面/造型参考链接',t:'links',c1:'说明',c2:'链接'},
+        {k:'note',l:'备注',t:'area'}
+      ]}
+    ],
+    onSave:function(V){
+      var o=Object.assign({},cur,V,{id:cur.id||uid('a'),
+        fee:numOrNull(V.fee), deposit:numOrNull(V.deposit),
+        refLinks:arr(V.refLinks).filter(function(x){return x.url||x.label;}), updated_at:nowStamp()});
+      ['rowA','rowB','rowC','rowS','rowM'].forEach(function(k){delete o[k];});
+      if(isShootAppt(V)){
+        /* 约定时间与地点由 saveSessionFromAppt 折进拍摄单的日期/场地，不会原样存进 sessions */
+        if(id){
+          /* v1.2.2.2（P1-1）：这条路径会删掉原预约单、又不走 applyAction 快照（保存即落定），
+             所以必须先让用户确认；取消时原预约单原封不动（此刻还什么都没动）。
+             注意 confirmBox 内部会对 text 做一次 esc()，这里只传纯文本、不要带标签。 */
+          var who=contactLabel(cur.contactId)||cur.contactText||'待定';
+          var carried=apptCarriedFields(o);
+          var gated=convertVerdict(o,cur,depTouched).gated;
+          closeModal();
+          confirmBox('转成拍摄单',
+            '「'+(cur.type||'预约')+' · '+who+'」这张预约单将被删除，改存成一张拍摄单。'+
+            (carried.length?('  拍摄单没有对应字段的内容会并进备注，不会丢：'+carried.join('；')):'')+
+            (gated>0?('  原预约单的定金 '+gated+' 还没有付款，不会计入拍摄单流水；若已补付，进拍摄单再填「已付定金」。'):'')+
+            '  你在表单里改过的状态与定金，一律以表单为准。',
+            function(){ deleteAppt(cur); saveSessionFromAppt(o,cur,depTouched); },'确认转换');
+          return;
+        }
+        saveSessionFromAppt(o,cur,depTouched); return;
+      }
+      ['date','time','method','locationId','locationText','changeReason'].forEach(function(k){ delete o[k]; });
+      put('appointments',o); syncApptExpense(o);
+      var wig=ensureWigFromAppt(o);
+      save(); render();
+      toast('预约单已保存'+(wig?' · 顺手加了一件假发（'+wig.name+'）':''));
+    }
+  });
+}
+/** v1.2.2.2（P1-1）：汇总"拍摄单装不下、要并进备注"的预约单字段，转换确认框与备注共用同一份清单 */
+function apptCarriedFields(o){
+  var out=[];
+  if(o.place&&o.locationId) out.push('原地点：'+o.place);
+  if(o.paidNote) out.push('付款：'+o.paidNote);
+  var rl=arr(o.refLinks).filter(function(x){return x.url||x.label;});
+  if(rl.length) out.push('参考链接：'+rl.map(function(x){return (x.label?x.label+' ':'')+(x.url||'');}).join(' / '));
+  return out;
+}
+/** v1.2.2.2（P0-4 / P2-1）：开一张拍摄单本身就说明"这套已经在拍了"，项目还停在「计划中」就往前推一格。
+    v1.2.2.2（P2-1）：约人转拍摄单 与 项目页「＋新建拍摄单」两个入口**共用这一套判断**，避免同一动作两入口副作用不同。
+    规则：已取消 / 已改期 不推；只推「计划中→拍摄中」、不回退；没有关联项目时什么都不做。
+    刻意不动 autoStage()，免得"把拍摄单滑回计划中"这类回退也误触发。 */
+function nudgeStageForShoot(cur){
+  if(!cur||['已取消','已改期'].indexOf(cur.status)>=0) return false;
+  var p=get('projects',cur.projectId);
+  if(!p||p.stage!=='计划中') return false;
+  doSetStage(p,'拍摄中');
+  return true;
+}
+/** 摄影师档期 → 拍摄单：约人只留一个入口，钱与定金走同一套自动流水。
+    v1.2.2.2（P1 追加）：状态与定金都以**表单为准**（表单已用 derive 把预约单口径显式搬成拍摄单口径，
+    并在"未付款"时清空了定金输入框），所以用户在转换时手改的状态/定金不会再被静默丢弃；
+    打开那一刻的 cur.status 只在表单值非法时兜底。具体的判定见 convertVerdict()。 */
+function saveSessionFromAppt(o,cur,depTouched){
+  var dt=String(o.datetime||'');
+  var v=convertVerdict(o,cur,depTouched);
+  /* v1.2.2.2（P1-1）：拍摄单没有的字段一律并进备注，不许静默丢 */
+  var carried=apptCarriedFields(o);
+  /* 未付款预约单的"约定定金"没有入账：把原金额补进备注，别让信息无声消失 */
+  if(v.gated>0) carried.push('原预约单定金 '+v.gated+'（未付款，未入账）');
+  var s={
+    id:uid('s'), projectId:o.projectId||'',
+    date:o.date||dt.slice(0,10)||'', time:o.time||dt.slice(11,16)||'',
+    method:o.method||'约拍', contactId:o.contactId||'',
+    photographerText:o.contactId?'':(o.contactText||''),
+    locationId:o.locationId||'', locationText:(o.locationId?'':(o.locationText||o.place||'')),
+    fee:numOrNull(o.fee), deposit:v.sDeposit,
+    status:v.sStatus,
+    changeReason:o.changeReason||'', timeline:cur.timeline||'', backup:cur.backup||'',
+    checklist:arr(cur.checklist),
+    note:[o.note,carried.join('；'),o.requirement?('要求：'+o.requirement):''].filter(Boolean).join(' '),
+    created_at:cur.created_at||nowStamp(), updated_at:nowStamp()
+  };
+  put('sessions',s); syncSessionExpense(s);
+  var moved=nudgeStageForShoot(s);
+  save(); render();
+  toast('已存成拍摄单'+(moved?' · 项目自动转「拍摄中」':''));
+  go('session',{sessionId:s.id,projectId:s.projectId,tab:'projects'});
+}
+/** v1.2.2.2（P2-5）：判断一件装备是不是"约毛娘时自动生成的那顶假发"。
+    不能只看 kind==='假发' —— 用户把类别改成别的（或改名）就会判重失效、再建一顶。
+    用持久标记 autoFrom + 生成时的备注文案做双保险（改名不影响，备注被改也没事，有标记兜底）。 */
+function isAutoWig(i){
+  if(!i) return false;
+  if(i.autoFrom==='appt') return true;
+  return /约毛娘时自动生成/.test(i.note||'');
+}
+/** v1.2.2 联动：约了毛娘 = 这顶假发已经在做了，台账里顺手挂一件并关联角色与出装 */
+function ensureWigFromAppt(a){
+  if(!a || a.type!=='毛娘') return null;
+  var p=get('projects',a.projectId);
+  if(!p || !p.characterId) return null;
+  /* 同一角色已有那顶自动假发 → 不重复建；顺手把这次的项目也关联上（原来会漏第二个项目） */
+  var exist=DB.items.filter(function(i){ return i.characterId===p.characterId&&isAutoWig(i); })[0];
+  if(exist){
+    if(arr(exist.projectIds).indexOf(p.id)<0){ exist.projectIds=arr(exist.projectIds).concat([p.id]); put('items',exist); }
+    return null;
+  }
+  var it={id:uid('i'),name:charName(p.characterId)+'·假发',kind:'假发',category:'整顶假发',
+    status:'已下单/制作中',source:'代工',characterId:p.characterId,projectIds:[p.id],autoFrom:'appt',
+    price:null,size:'',orderDate:String(a.datetime||'').slice(0,10)||todayISO(),arrivedDate:'',storage:'',
+    wigColor:'',wigLen:'',wigStyle:'未剪',wigBy:contactLabel(a.contactId)||a.contactText||'',
+    dispType:'',dispKind:'',dispDate:'',dispPrice:null,dispTo:'',dispReason:'',
+    fittings:[],refLinks:[],note:'约毛娘时自动生成，造型归属与毛色可以进装备里补',
+    created_at:nowStamp(),updated_at:nowStamp()};
+  put('items',it); syncItemExpense(it);
+  return it;
+}
+/* ---------- 交付物（原片/选片/精修/成片包） ---------- */
+function formDeliv(id,preset){
+  var cur=id?get('deliverables',id):Object.assign({status:'未交付',type:'原片'},preset||{});
+  openForm({
+    title:id?'编辑交付物':'新增交付物',
+    values:cur,
+    fields:[
+      {k:'sessionId',l:'所属拍摄单',t:'select',req:1,opts:function(){
+        return DB.sessions.map(function(s){ return {v:s.id,l:(s.date||'未定')+' · '+projLabel(s.projectId)+' · '+(s.method||'')}; }); }},
+      {k:'rowA',t:'row',cols:[
+        {k:'type',l:'类型',t:'select',opts:DELIV_TYPES,req:1},
+        {k:'status',l:'状态',t:'select',opts:DELIV_STATUS,req:1,live:1}
+      ]},
+      {k:'rowB',t:'row',cols:[
+        {k:'agreedCount',l:'约定给几张',t:'number'},
+        {k:'agreedDate',l:'约定什么时候给',t:'date',hint:'过了这天没返图就会标红'}
+      ]},
+      {k:'g_detail',t:'group',l:'收到之后（可跳过）',cols:[
+        {k:'rowC',t:'row',cols:[
+          {k:'actualCount',l:'实际张数',t:'number'},
+          {k:'deliveredDate',l:'实际交付日',t:'date'}
+        ]},
+        {k:'link',l:'网盘链接 / 本地目录',ph:'本期不上传照片，只登记位置'},
+        {k:'retouch',l:'修图要求',t:'area',rows:2,ph:'磨皮程度 / 液化 / 背景 / 色调'},
+        {k:'note',l:'备注',t:'area'}
+      ]}
+    ],
+    onSave:function(V){
+      var o=Object.assign({},cur,V,{id:cur.id||uid('d'),
+        agreedCount:numOrNull(V.agreedCount), actualCount:numOrNull(V.actualCount)});
+      ['rowA','rowB','rowC'].forEach(function(k){delete o[k];});
+      put('deliverables',o); render(); toast('交付物已保存');
+    }
+  });
+}
+/* ---------- 发布记录 ---------- */
+function formPub(id,preset){
+  var cur=id?get('publications',id):Object.assign({platform:'微博'},preset||{});
+  openForm({
+    title:id?'编辑发布记录':'新增发布记录',
+    values:cur,
+    fields:[
+      {k:'projectId',l:'所属项目',t:'select',req:1,opts:function(){ return DB.projects.map(function(p){return {v:p.id,l:p.name};}); }},
+      {k:'rowA',t:'row',cols:[
+        {k:'platform',l:'平台',t:'select',opts:PUB_PLATFORMS,req:1},
+        {k:'date',l:'发布日期',t:'date'}
+      ]},
+      {k:'url',l:'链接',t:'url'},
+      {k:'g_more',t:'group',l:'文案与数据（可跳过）',cols:[
+        {k:'deliverableId',l:'关联成片',t:'select',opts:function(){ return DB.deliverables.map(function(d){ return {v:d.id,l:(d.type||'')+'·'+sessionLabel(d.sessionId)}; }); }},
+        {k:'caption',l:'文案/草稿',t:'area',rows:3},
+        {k:'tags',l:'标签',ph:'空格分隔，如：#芙宁娜 #漫展返图'},
+        {k:'stats',l:'数据（手动记）',ph:'如：赞 1.2k / 藏 300'},
+        {k:'note',l:'备注',t:'area'}
+      ]}
+    ],
+    onSave:function(V){
+      var o=Object.assign({},cur,V,{id:cur.id||uid('pb')});
+      delete o.rowA;
+      put('publications',o); render(); toast('已保存');
+    }
+  });
+}
+/* ---------- 费用 ---------- */
+function formExpense(id,preset){
+  var cur=id?get('expenses',id):Object.assign({date:todayISO(),category:'其他'},preset||{});
+  openForm({
+    title:id?'编辑支出':'记一笔支出',
+    values:cur,
+    fields:[
+      {k:'projectId',l:'所属项目',t:'select',opts:function(){ var o=DB.projects.map(function(p){return {v:p.id,l:p.name};}); o.unshift({v:'',l:'不关联项目（通用消耗）'}); return o; }},
+      {k:'rowA',t:'row',cols:[
+        {k:'date',l:'日期',t:'date',req:1},
+        {k:'category',l:'分类',t:'select',opts:EXPENSE_CATS,req:1}
+      ]},
+      {k:'amount',l:'金额',t:'money',req:1},
+      {k:'note',l:'备注',ph:'如：尾款 / 打车 / 材料'},
+      {k:'paidBy',l:'付款方式',ph:'微信 / 支付宝 / 闲鱼'}
+    ],
+    onSave:function(V){
+      var o=Object.assign({},cur,V,{id:cur.id||uid('e'),amount:num(V.amount),source:'手动'});
+      delete o.rowA;
+      put('expenses',o); render(); toast('已记账');
+    }
+  });
+}
+/* ---------- 待办 ---------- */
+function formTodo(id,preset){
+  var cur=id?get('todos',id):Object.assign({},preset||{});
+  openForm({
+    title:id?'编辑待办':'新增待办',
+    values:cur,
+    fields:[
+      {k:'title',l:'事项',req:1,ph:'如：催摄影师原片 / 补假毛造型'},
+      {k:'rowA',t:'row',cols:[
+        {k:'due',l:'截止日',t:'date'},
+        {k:'projectId',l:'项目',t:'select',opts:function(){ var o=DB.projects.map(function(p){return {v:p.id,l:p.name};}); o.unshift({v:'',l:'不关联'}); return o; }}
+      ]},
+      {k:'note',l:'备注',t:'area',rows:2}
+    ],
+    onSave:function(V){
+      var o=Object.assign({},cur,V,{id:cur.id||uid('t'),title:String(V.title).trim()});
+      delete o.rowA;
+      put('todos',o); render(); toast('已保存待办');
+    }
+  });
+}
+/* =========================================================
+   渲染核心
+   ========================================================= */
+var TABS=[
+  {k:'home',l:'首页',ic:'⌂'},{k:'projects',l:'项目',ic:'✎'},{k:'assets',l:'装备',ic:'❐'},
+  {k:'team',l:'通讯录',ic:'☺'},{k:'mine',l:'我的',ic:'⚙'}
+];
+var TAB_OF={home:'home',projects:'projects',project:'projects',asset:'assets',assets:'assets',   /* 1.1.2：asset 原先错配到 projects，装备详情页底部高亮会跳到「项目」 */
+  team:'team',contact:'team',location:'team',mine:'mine',stats:'mine',session:'projects',appt:'projects'};
+
+function badge(t,cls){ return `<span class="badge ${cls||''}">${esc(t)}</span>`; }
+function statusBadge(st){ return badge(st,STATUS_STYLE[st]||''); }
+function card(title,body,act){
+  return `<div class="card"><h3>${esc(title)}${act?`<span class="act" onclick="${act.fn}" style="cursor:pointer">${esc(act.label)}</span>`:''}</h3>${body}</div>`;
+}
+function listRow(o){
+  var inner=`<div class="main"><div class="t">${o.t}</div>${o.d?`<div class="d">${o.d}</div>`:''}</div>`
+    + (o.r?`<div class="r">${o.r}</div>`:'') + (o.badge?`<div>${o.badge}</div>`:'');
+  var click=o.onclick?`onclick="${o.onclick}"`:'';
+  if(!o.sw) return `<div class="row ${o.cls||''}" ${click}>${inner}</div>`;
+  return `<div class="row ${o.cls||''} sw" data-sw="${o.sw}" ${click}>${swWrap(`<div class="swrow">${inner}</div>`)}</div>`;
+}
+/** 滑动层：左右各一块揭示面板（z0）+ 盖在上面的白色内容层（z2） */
+function swWrap(contentHtml){
+  return `<div class="swin">
+    <div class="swpanel left"><b></b><div class="swlab"></div></div>
+    <div class="swpanel right"><b></b><div class="swlab"></div></div>
+    <div class="swmain">${contentHtml}</div></div>`;
+}
+function emptyBox(text,btn){
+  return `<div class="empty">${esc(text)}${btn?`<div style="margin-top:8px"><button class="btn sm" onclick="${btn.fn}">${esc(btn.label)}</button></div>`:''}</div>`;
+}
+function kv(k,v){ return `<div class="kv"><div class="k">${esc(k)}</div><div class="v">${v===null||v===undefined||v===''?'<span class="muted">—</span>':v}</div></div>`; }
+/* 1.1.2 新增：kv 的 v 设计上是吃 HTML 的，用户数据必须走这个转义版（导入别人的备份 JSON 是现实攻击面） */
+function kve(k,v){ return kv(k,(v===null||v===undefined||v==='')?'':esc(v)); }
+function linkOrText(u,label){
+  if(!u) return '';
+  return /^https?:\/\//i.test(u)?`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(label||u)}</a>`:esc(label||u);
+}
+
+function render(){
+  var t=document.getElementById('topbar'), m=document.getElementById('main');
+  var af=document.activeElement, aid=af&&af.id, apos=null, aval=null;
+  try{ if(af&&af.setSelectionRange){ apos=af.selectionStart; aval=af.value; } }catch(e){}
+  /* 1.2.2：滑动槽里的横向滚动位置在重绘后保持原样（点一个 chip 就弹回最左边很碍事） */
+  var scrollKeep={};
+  m.querySelectorAll('.pill-row[data-sk]').forEach(function(el){ scrollKeep[el.getAttribute('data-sk')]=el.scrollLeft; });
+  var html='';
+  switch(S.view){
+    case 'home': html=vHome(); break;
+    case 'projects': html=vProjects(); break;
+    case 'project': html=vProject(); break;
+    case 'assets': html=vAssets(); break;
+    case 'asset': html=vAsset(); break;
+    case 'team': html=vTeam(); break;
+    case 'contact': html=vContact(); break;
+    case 'location': html=vLocation(); break;
+    case 'session': html=vSession(); break;
+    case 'mine': html=vMine(); break;
+    default: html=vHome();
+  }
+  m.innerHTML=html;
+  m.querySelectorAll('.pill-row[data-sk]').forEach(function(el){
+    var k=el.getAttribute('data-sk');
+    if(scrollKeep[k]) el.scrollLeft=scrollKeep[k];
+  });
+  t.innerHTML=vTopbar();
+  renderTabbar();
+  if(aid){
+    var el=document.getElementById(aid);
+    if(el){ try{ el.focus(); if(aval!=null&&el.value!==aval) el.value=aval; if(apos!=null) el.setSelectionRange(apos,apos); }catch(e){} }
+  }
+}
+function vTopbar(){
+  var backBtn = ['home'].indexOf(S.view)>=0 ? '' :
+    `<button class="btn sm gray" onclick="navBack()">‹ 返回</button>`;
+  var map={
+    home:'<h1>CosPlan<span class="sub">Cosplay 计划器 · 数据只存本机</span></h1>',
+    projects:'<h1>出装项目<span class="sub">计划中 / 拍摄中 / 已出片</span></h1>',
+    project:'<h1>'+esc(projTitle())+'<span class="sub">'+esc(projSub())+'</span></h1>'+
+      `<button class="btn sm ghost" onclick="formProject('${S.projectId}')">编辑</button>`,
+    assets:'<h1>服装 / 装备<span class="sub">C服·道具·假发·美瞳·鞋·配件</span></h1>',
+    asset:'<h1>装备详情</h1>',
+    team:'<h1>通讯录 / 场地<span class="sub">摄影师 / 妆娘 / 毛娘 / 修图师 / 场地</span></h1>',
+    contact:'<h1>联系人</h1>', location:'<h1>场地</h1>', session:'<h1>拍摄单</h1>',
+    mine:'<h1>我的<span class="sub">统计 · 备份 · 设置</span></h1>'
+  };
+  return backBtn+(map[S.view]||map.home);
+}
+function navBack(){
+  if(S.view==='asset') go('assets',{tab:'assets'});
+  else if(S.view==='contact') go('team',{tab:'team',teamTab:'contacts'});
+  else if(S.view==='location') go('team',{tab:'team',teamTab:'locations'});
+  /* 1.1.2 修复：原先 project 与 session 共用一个分支，project 态下 S.projectId 必然有值 → go('project') 原地自环，返回键失效 */
+  else if(S.view==='session') go(S.projectId?'project':'projects',{tab:'projects'});
+  else if(S.view==='project') go('projects',{tab:'projects'});
+  else go('home',{tab:'home'});
+}
+function projTitle(){ var p=get('projects',S.projectId); return p?p.name:'项目'; }
+function projSub(){
+  var p=get('projects',S.projectId); if(!p) return '';
+  return [charLabel(p.characterId)+(p.skin?'·'+p.skin:''), p.occasion||'', p.stage||''].filter(Boolean).join(' · ');
+}
+function renderTabbar(){
+  var cur=TAB_OF[S.view]||'home';
+  document.getElementById('tabbar').innerHTML=TABS.map(function(t){
+    return `<button class="${t.k===cur?'on':''}" onclick="go('${t.k}',{tab:'${t.k}'})"><span class="ic">${t.ic}</span>${t.l}</button>`;
+  }).join('');
+}
+
+/* =========================================================
+   首页：提醒 + 概览（M12 时间线聚合）
+   ========================================================= */
+function upcomingEvents(days){
+  var out=[];
+  DB.sessions.forEach(function(s){
+    var d=dayDiff(s.date);
+    if(d!==null && d>=0 && d<=days && s.status!=='已取消') out.push({due:s.date+(s.time?' '+s.time:''),kind:'拍摄',title:(s.method||'拍摄')+' · '+projLabel(s.projectId)+(s.locationId?' @'+locationLabel(s.locationId):(s.locationText?' @'+s.locationText:'')),to:'session',id:s.id});
+  });
+  DB.appointments.forEach(function(a){
+    var d=dayDiff((a.datetime||'').slice(0,10));
+    if(a.datetime && d!==null && d>=0 && d<=days && ['已完成','已结清','已取消','爽约'].indexOf(a.status)<0)
+      out.push({due:a.datetime,kind:'妆造',title:a.type+' · '+(contactLabel(a.contactId)||a.contactText||'待定')+'（'+a.status+'）',to:'project',id:a.projectId});
+  });
+  DB.projects.forEach(function(p){
+    if(p.stage==='已出片') return;
+    var d=dayDiff(p.deadline);
+    if(d!==null && d<=days) out.push({due:p.deadline,kind:'deadline',title:p.name+' 计划完成日（'+p.stage+'）',to:'project',id:p.id});
+  });
+  DB.todos.forEach(function(t){
+    if(t.done) return;
+    var d=dayDiff(t.due);
+    if(d!==null && d<=days) out.push({due:t.due,kind:'待办',title:t.title+(t.projectId?' · '+projLabel(t.projectId):''),to:'project',id:t.projectId||S.projectId});
+  });
+  DB.items.forEach(function(i){
+    if(i.kind==='美瞳'&&i.expiresAt){ var d=dayDiff(i.expiresAt); if(d!==null&&d<=days&&d>=-365) out.push({due:i.expiresAt,kind:'美瞳到期',title:i.name+' 到期（'+(i.status||'')+'）',to:'asset',id:i.id}); }
+    if(i.kind==='消耗品'&&num(i.qty)>0&&num(i.lowQty)>0&&num(i.qty)<=num(i.lowQty)) out.push({due:'',kind:'低库存',title:i.name+' 仅剩 '+i.qty+'，低于阈值 '+i.lowQty,to:'asset',id:i.id});
+  });
+  return sortAsc(out.map(function(x){x._k=x.due||'9999';return x;}),'_k');
+}
+function gotoTarget(to,id){
+  /* 1.1.2 修复：从首页点进别的项目下的拍摄单时没带 projectId，返回会跳到上一个看过的项目 */
+  if(to==='session'){ var s=get('sessions',id); go('session',{sessionId:id,projectId:s?s.projectId:(S.projectId||''),tab:'projects'}); }
+  else if(to==='asset') go('asset',{itemId:id,tab:'assets'});
+  else if(to==='project') go('project',{projectId:id,tab:'projects'});
+}
+function vHome(){
+  var od=overdueDelivs();
+  var openTodos=DB.todos.filter(function(t){return !t.done;});
+  var ev=upcomingEvents(14);
+  var monthKey=todayISO().slice(0,7);
+  var monthCost=sum(DB.expenses.filter(function(e){return String(e.date||'').slice(0,7)===monthKey;}),'amount');
+  var allCost=sum(DB.expenses,'amount');
+  var back=DB.items.reduce(function(t,i){ return t+soldBack(i); },0);
+  var active=DB.projects.filter(function(p){return p.stage!=='已出片';});
+  var html='';
+
+  if(!DB.projects.length && !DB.items.length && !DB.contacts.length){
+    html+=`<div class="info-box">还没有数据。可以点下面的按钮载入示例项目熟悉流程（之后可在「我的」里一键清空），或直接开始新建。</div>
+    <div class="btn-row" style="margin-bottom:14px">
+      <button class="btn" onclick="formProject()">＋ 新建出装项目</button>
+      <button class="btn gray" onclick="loadSample()">载入示例</button>
+    </div>`;
+  }
+
+  /* 逾期项 */
+  var danger=[];
+  od.forEach(function(d){ danger.push({label:(d.type||'交付物')+'逾期',
+    title:projLabel((get('sessions',d.sessionId)||{}).projectId)+' · '+d.type+'（约定 '+(d.agreedDate||'')+'，' + dueText(d.agreedDate) + '）',
+    to:'session',id:d.sessionId,
+    r:`<span class="badge b-accent" onclick="event.stopPropagation();todoFromDeliv('${d.id}')" style="cursor:pointer">＋转待办</span>`}); });
+  DB.sessions.forEach(function(s){
+    if(['计划中','已确认'].indexOf(s.status)>=0 && s.date && isPast(s.date))
+      danger.push({label:'拍摄日已过',title:s.date+' '+projLabel(s.projectId)+'（'+s.status+'）',to:'session',id:s.id});
+  });
+  /* v1.2 联动：过了计划完成日还没出片，以前只在项目页里提示，首页看不到 */
+  DB.projects.forEach(function(p){
+    if(p.stage!=='已出片' && p.deadline && isPast(p.deadline))
+      danger.push({label:'已过计划完成日',title:p.name+'（'+p.stage+' · '+p.deadline+'）',to:'project',id:p.id});
+  });
+  openTodos.forEach(function(t){ if(t.due&&isPast(t.due)) danger.push({label:'待办逾期',title:t.title,to:'project',id:t.projectId}); });
+  if(danger.length){
+    html+=`<div class="card"><h3>需要处理<span class="cnt">${danger.length} 项</span></h3>`+
+      danger.map(function(x){
+        return listRow({cls:'row-sec',t:`${badge(x.label,'b-danger')} ${esc(x.title)}`,r:x.r||'',onclick:`gotoTarget('${x.to}','${x.id||''}')`});
+      }).join('')+`</div>`;
+  }
+
+  /* 时间线 */
+  html+=`<div class="card"><h3>接下来 14 天<span class="cnt">${ev.length} 项</span><span class="act" onclick="go('projects',{tab:'projects'})">全部项目 ›</span></h3>`;
+  html+= ev.length? ev.slice(0,12).map(function(x){
+    return listRow({t:`${badge(x.kind, x.kind==='deadline'?'b-warn':(x.kind==='拍摄'?'b-accent':'b-info'))} ${esc(x.title)}`,
+      d:x.due||'',onclick:`gotoTarget('${x.to}','${x.id||''}')`});
+  }).join('') : '<div class="muted tiny">暂无安排。拍摄单、预约单、项目 deadline、待办都会汇总到这里。</div>';
+  html+='</div>';
+
+  /* 数字概览：只留两件最要紧的 */
+  html+=`<div class="grid2" style="margin-bottom:12px">
+    <div class="stat"><div class="n">${usableItems().length}</div><div class="l">手头在用 <span class="tiny">/ 台账共 ${DB.items.length} 件</span></div></div>
+    <div class="stat"><div class="n">${money(allCost)}<span class="tiny muted"> 元</span></div><div class="l">花掉了 <span class="tiny">/ 本月 ${money(monthCost)}，出物回血 ${money(back)}</span></div></div>
+  </div>`;
+
+  /* 进行中项目 */
+  html+=`<div class="card"><h3>进行中的出装<span class="act" onclick="go('projects',{tab:'projects'})">管理 ›</span></h3>`;
+  html+= active.length? sortAsc(active,'deadline').map(function(p){
+    var its=itemsOfProject(p.id), ready=its.filter(isReadyItem).length;
+    var pct=its.length?Math.round(ready/its.length*100):0;
+    var spent=sum(expsOf(p.id),'amount');
+    return listRow({
+      t:`${esc(p.name)} ${p.deadline?badge(dueText(p.deadline), isPast(p.deadline)?'b-danger':'b-warn'):''}`,
+      d:`${badge(p.stage,'b-accent')} 备装 ${ready}/${its.length} · 花费 ${money(spent)}${p.budget?' / 预算 '+money(p.budget):''}元`,
+      r:'›',onclick:`go('project',{projectId:'${p.id}',tab:'projects'})`
+    });
+  }).join('') : emptyBox('还没有进行中的项目', {label:'＋ 新出一个角色',fn:'formProject()'});
+  html+='</div>';
+
+  /* 处置提醒 */
+  var borrow=DB.items.filter(function(i){return i.status==='外借中';});
+  if(borrow.length){
+    html+=`<div class="card"><h3>借出去的<span class="cnt">${borrow.length}</span></h3>`+borrow.map(function(i){
+      return listRow({t:esc(i.name),d:`借给 ${esc(i.dispTo||'未记录 CN')} ${(i.dispDate||'')?'· '+i.dispDate:''}`,r:'›',onclick:`go('asset',{itemId:'${i.id}',tab:'assets'})`,sw:'item:'+i.id});
+    }).join('')+`</div>`;
+  }
+  html+=`<div class="btn-row" style="margin:14px 0 4px">
+    <button class="btn" onclick="formItem()">＋ 加一件装备</button>
+    <button class="btn ghost" onclick="formProject()">＋ 新出一个角色</button>
+    <button class="btn gray" onclick="formExpense()">＋ 记一笔钱</button>
+  </div>`;
+  return html;
+}
+
+/* =========================================================
+   项目列表
+   ========================================================= */
+function projectStats(p){
+  var its=itemsOfProject(p.id);
+  var spent=sum(expsOf(p.id),'amount');
+  var back=its.reduce(function(t,i){ return t+soldBack(i); },0);
+  var ready=its.filter(isReadyItem).length;
+  var ss=sessionsOf(p.id), od=0;
+  ss.forEach(function(s){ if(s.status==='已取消') return; delivsOf(s.id).forEach(function(d){ if(d.agreedDate&&isPast(d.agreedDate)&&d.status!=='已返图') od++; }); });
+  return {its:its,spent:spent,back:back,ready:ready,n:its.length,ss:ss,od:od};
+}
+function vProjects(){
+  var list=DB.projects.slice();
+  if(S.projectStage) list=list.filter(function(p){return p.stage===S.projectStage;});
+  if(S.projectQ){ var q=String(S.projectQ).toLowerCase();
+    list=list.filter(function(p){ return (p.name+' '+(p.skin||'')+' '+charLabel(p.characterId)+' '+(p.occasion||'')+' '+(p.note||'')).toLowerCase().indexOf(q)>=0; }); }
+  list=sortAsc(list,'deadline');
+  var html=`<div class="card flat" style="padding:10px">
+    <input type="text" id="qProj" placeholder="搜索项目 / 角色" value="${esc(S.projectQ)}" oninput="S.projectQ=this.value;render()" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card)">
+    <div class="pill-row" data-sk="pstage" style="margin-top:8px">${['全部'].concat(STAGES).map(function(s){
+      var v=s==='全部'?'':s;
+      return `<button class="chip ${(S.projectStage||'')===v?'on':''}" onclick="S.projectStage='${v}';render()">${s}${v?' '+DB.projects.filter(function(p){return p.stage===v;}).length:''}</button>`;
+    }).join('')}</div></div>`;
+  html+= list.length? list.map(function(p){
+    var st=projectStats(p);
+    var pct=st.n?Math.round(st.ready/st.n*100):0;
+    return `<div class="card cardsw sw" data-sw="project:${p.id}" onclick="go('project',{projectId:'${p.id}',tab:'projects'})" style="cursor:pointer">${swWrap(`
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="flex:1;min-width:0"><b>${esc(p.name)}</b><div class="muted tiny">${esc(charLabel(p.characterId))}${p.skin?' · '+esc(p.skin):''}${p.occasion?' · '+esc(p.occasion):''}</div></div>
+        ${badge(p.stage,p.stage==='已出片'?'b-ok':(p.stage==='拍摄中'?'b-pink':'b-accent'))}
+      </div>
+      <div class="bar" style="margin:8px 0 6px"><i style="width:${pct}%"></i></div>
+      <div class="muted tiny" style="display:flex;gap:10px;flex-wrap:wrap">
+        <span>备装 ${st.ready}/${st.n}</span>
+        <span>拍摄 ${st.ss.length} 场</span>
+        <span>花费 ${money(st.spent)}${p.budget?'/预算 '+money(p.budget):''}</span>
+        ${st.back?`<span>回血 ${money(st.back)}</span>`:''}
+        ${p.deadline?`<span style="${isPast(p.deadline)&&p.stage!=='已出片'?'color:var(--danger);font-weight:700':''}">D-day ${esc(p.deadline)}（${esc(dueText(p.deadline))}）</span>`:''}
+        ${st.od?`<span style="color:var(--danger);font-weight:700">${st.od} 项交付逾期</span>`:''}
+      </div>`)}</div>`;
+  }).join('') : emptyBox(S.projectStage||S.projectQ?'没有符合条件的项目':'还没有项目：一个项目 = 某角色某套皮肤的出装计划', {label:'＋ 新建出装项目',fn:'formProject()'});
+  return html+`<button class="fab" onclick="formProject()">＋</button>`;
+}
+
+/* =========================================================
+   项目详情看板
+   ========================================================= */
+/* v1.2：五个分页并成四个（拍摄与人员 + 成片 = 拍摄），窄屏放得下，流程也是顺的 */
+var PROJ_TABS=[['base','概览'],['gear','装备'],['shoot','拍摄'],['cost','费用']];
+function projectGaps(p){
+  var st=projectStats(p), g=[], its=st.its;
+  if(!its.length) g.push('还没有登记任何 C服/道具/配件');
+  if(!its.filter(function(i){return i.kind==='C服'||i.kind==='鞋'||i.kind==='饰品';}).length) g.push('缺 C服条目');
+  if(!its.filter(function(i){return i.kind==='假发';}).length) g.push('缺假发（自剪还是约毛娘？）');
+  var appts=DB.appointments.filter(function(a){return a.projectId===p.id;});
+  var needMakeup=['日常自娱','场照'].indexOf(p.occasion)<0;
+  if(needMakeup&&!appts.filter(function(a){return a.type==='妆娘';}).length) g.push('未约妆娘');
+  if(needMakeup&&!appts.filter(function(a){return a.type==='毛娘';}).length && !its.filter(function(i){return i.kind==='假发'&&i.wigStyle==='已造型';}).length) g.push('未约毛娘 / 假发未造型');
+  if(!st.ss.length) g.push('还没有拍摄单');
+  if(p.stage==='拍摄中'&&!st.ss.filter(function(s){return s.status==='已确认';}).length) g.push('拍摄单未确认（时间/场地/摄影师）');
+  if(st.ss.filter(function(s){return s.status==='已完成';}).length && !DB.deliverables.some(function(d){return st.ss.some(function(s){return s.id===d.sessionId;});})) g.push('已拍但没登记原片/精修交付');
+  /* v1.2 联动：片子都返了却还没有任何发布记录，多半是忘了记 */
+  if(st.ss.some(function(x){return delivsOf(x.id).some(function(d){return d.status==='已返图';});}) && !DB.publications.some(function(b){return b.projectId===p.id;}))
+    g.push('已返图但没记发布：发出去这套才算用完');
+  var pend=appts.filter(function(a){return ['待确认','已定档'].indexOf(a.status)>=0 && num(a.fee)>num(a.deposit);});
+  if(pend.length) g.push('有预约单未付定金：'+pend.map(function(a){return a.type;}).join('、'));
+  if(!st.spent) g.push('还没有费用流水（可能漏记）');
+  if(p.budget && st.spent>p.budget) g.push('⚠ 已超出预算 '+money(st.spent-p.budget)+' 元');
+  return g;
+}
+function doSetStage(p,st){
+  p.stage=st; p.updated_at=nowStamp();
+  if(st==='已出片'&&!p.archived_at) p.archived_at=todayISO();
+  if(st!=='已出片') p.archived_at='';   /* 1.1.2 修复：退回进行中时要清掉归档日期，否则统计仍把它当已出片 */
+  put('projects',p);
+}
+function setStage(pid,st){
+  var p=get('projects',pid); if(!p) return;
+  applyAction('「'+p.name+'」阶段 → '+st,function(){ doSetStage(p,st); },{plain:true});
+  if(st==='已出片') promptDispose(p);
+}
+function vProject(){
+  var p=get('projects',S.projectId);
+  if(!p) return emptyBox('项目不存在或已删除',{label:'回到项目列表',fn:"go('projects',{tab:'projects'})"});
+  var st=projectStats(p);
+  var html=`<div class="card"><div class="stage-head">
+      <h2>${esc(p.name)}</h2>
+      <span class="act" onclick="delProjectConfirm('${p.id}')" style="color:var(--danger);cursor:pointer;font-size:12px">删除</span>
+    </div>
+    <div class="pill-row" data-sk="dstage">${STAGES.map(function(s){return `<button class="chip ${p.stage===s?'on':''}" onclick="setStage('${p.id}','${s}')">${s}</button>`;}).join('')}</div>
+    <div class="grid2">
+      ${kv('角色',esc(charLabel(p.characterId))+(p.skin?' · '+esc(p.skin):''))}
+      ${kv('场合',esc(p.occasion||''))}
+      ${kv('计划完成日',(p.deadline?esc(p.deadline)+'（'+dueText(p.deadline)+'）':''))}
+      ${kv('还原度',esc(p.restore||''))}
+      ${kv('预算',(p.budget?money(p.budget)+' 元':''))}
+      ${kv('实际花费',`<b class="mono">${money(st.spent)}</b>${st.back?` <span class="muted tiny">回血 ${money(st.back)}</span>`:''}`)}
+    </div>
+    ${p.note?`<div class="muted tiny" style="margin-top:6px">${esc(p.note)}</div>`:''}
+    </div>`;
+  var gaps=projectGaps(p);
+  if(gaps.length) html+=`<div class="warn-box"><b>还缺这些：</b><br>${gaps.map(function(x){return '· '+esc(x);}).join('<br>')}</div>`;
+
+  html+=swipeHintBox();
+  html+=`<div class="tabs">${PROJ_TABS.map(function(t){return `<button class="${S.projTab===t[0]?'on':''}" onclick="S.projTab='${t[0]}';render()">${t[1]}</button>`;}).join('')}</div>`;
+
+  if(S.projTab==='gear') html+=projTabGear(p,st);
+  else if(S.projTab==='shoot') html+=projTabShoot(p,st)+projTabTeam(p)+projTabFilm(p,st);
+  else if(S.projTab==='cost') html+=projTabCost(p,st);
+  else html+=projTabBase(p,st);
+  return html+`<button class="fab" onclick="quickAdd()">＋</button>`;
+}
+function projTabBase(p,st){
+  var td=DB.todos.filter(function(t){return t.projectId===p.id;});
+  var h='';
+  h+=card('参考与情报',refLinks(p.refLinks),null);
+  h+=card('待办 / 提醒',
+    td.length? sortAsc(td,'due').map(function(t){
+      return `<div class="check-row ${t.done?'done':''} sw" data-sw="todo:${t.id}" onclick="toggleTodo('${t.id}')">`+
+        swWrap(`<div class="swrow">
+        <input type="checkbox" ${t.done?'checked':''}>
+        <div class="txt">${esc(t.title)}${t.note?`<div class="tiny muted">${esc(t.note)}</div>`:''}</div>
+        <div class="r tiny" ${t.due&&isPast(t.due)&&!t.done?'style="color:var(--danger);font-weight:700"':''}>${t.due?esc(dueText(t.due)):''}</div>
+        <span class="badge" onclick="event.stopPropagation();delTodo('${t.id}')" style="cursor:pointer">✕</span></div>`)+`</div>`;
+    }).join('') : emptyBox('无待办'),{label:'＋ 加待办',fn:`formTodo(null,{projectId:'${p.id}',due:''})`});
+  if(st.n){
+    var byKind={};
+    st.its.forEach(function(i){ byKind[i.kind]=byKind[i.kind]||[]; byKind[i.kind].push(i); });
+    h+=`<div class="card"><h3>备装进度<span class="cnt">${st.ready}/${st.n} 就绪</span><span class="act" onclick="S.projTab='gear';render()">去装备 ›</span></h3>`+
+      Object.keys(byKind).map(function(k){
+        var a=byKind[k], r=a.filter(isReadyItem).length;
+        return `<div class="row" style="cursor:default"><div class="main"><div class="t">${esc(k)} <span class="muted tiny">${r}/${a.length}</span></div>
+          <div class="bar" style="margin-top:4px"><i style="width:${Math.round(r/a.length*100)}%"></i></div></div>
+          <div class="r tiny">${a.map(function(i){return esc(i.name)+'·'+esc(i.status);}).join(' ')}</div></div>`;
+      }).join('')+`</div>`;
+  }
+  return h;
+}
+function projTabGear(p,st){
+  var its=st.its;
+  var h=`<div class="btn-row" style="margin-bottom:10px">
+    <button class="btn sm" onclick="formItem(null,{projectIds:['${p.id}'],characterId:'${p.characterId}',status:'愿望单/购物车'})">＋ 加一件装备</button>
+    <button class="btn sm ghost" onclick="linkItemPicker('${p.id}')">关联已有装备</button>
+  </div>`;
+  if(!its.length) return h+emptyBox('还没有条目：C服、假毛、道具、美瞳、鞋都记在这里');
+  var byKind={};
+  its.forEach(function(i){ (byKind[i.kind]=byKind[i.kind]||[]).push(i); });
+  Object.keys(byKind).forEach(function(k){
+    h+=`<div class="card"><h3>${esc(k)}<span class="cnt">${byKind[k].length}</span></h3>`+
+      byKind[k].map(function(i){
+        return listRow({t:`${esc(i.name)} ${statusBadge(i.status)}`,
+          d:[i.size?'码:'+esc(i.size):'',i.price?'¥'+money(i.price):'',i.shop?esc(i.shop):'',i.storage?'放:'+esc(i.storage):''].filter(Boolean).join(' · '),
+          r:'›',onclick:`go('asset',{itemId:'${i.id}',tab:'assets'})`,
+          sw:itemSwappable(i)?'item:'+i.id:''});
+      }).join('')+`</div>`;
+  });
+  return h;
+}
+function linkItemPicker(pid){
+  var p=get('projects',pid); if(!p) return;
+  var cand=DB.items.filter(function(i){ return arr(i.projectIds).indexOf(pid)<0 && (!i.characterId || i.characterId===p.characterId); });
+  if(!cand.length){ toast('台账里没有可关联的条目，先去「装备」新增'); return; }
+  openModal({
+    title:'关联已有装备到「'+p.name+'」',
+    body:'<div class="tiny muted" style="margin-bottom:8px">按名称或角色筛选，点一条即关联（只显示通用件与同角色件）</div>'+
+      cand.map(function(i){
+        return listRow({t:`${esc(i.name)} ${statusBadge(i.status)}`,d:(i.kind||'')+' · '+charLabel(i.characterId),r:'＋',onclick:`linkItemToProject('${i.id}','${pid}')`});
+      }).join('')
+  });
+}
+function linkItemToProject(iid,pid){
+  var i=get('items',iid); if(!i) return;
+  i.projectIds=arr(i.projectIds).concat([pid]); put('items',i); syncItemExpense(i); save();
+  closeModal(); render(); toast('已关联：'+i.name);
+}
+function projTabTeam(p){
+  var ap=DB.appointments.filter(function(a){return a.projectId===p.id;});
+  var h=card('预约单（妆娘 / 毛娘 / 摄影师 / 修图）',
+    ap.length? sortDesc(ap,'datetime').map(function(a){
+      return listRow({t:`${esc(a.type||'')}·${esc(contactLabel(a.contactId)||a.contactText||'待定')} ${badge(a.status,a.status==='已结清'?'b-ok':(a.status==='待确认'?'b-warn':'b-info'))}`,
+        d:`${esc(a.datetime||'未定时间')} ${a.place?'· '+esc(a.place):''} ${a.fee?'· 总价 '+money(a.fee)+'（定金 '+money(a.deposit)+'）':''}`,
+        /* 1.1.2：补删除入口（deleteAppt 原先无调用点） */
+        r:`<span class="badge" onclick="event.stopPropagation();delApptConfirm('${a.id}')" style="cursor:pointer" title="删除这条预约">✕</span> <span class="muted">›</span>`,
+        onclick:`formAppt('${a.id}')`,
+        sw:APPT_FLOW.indexOf(a.status)>=0?'appt:'+a.id:''});
+    }).join('') : emptyBox('还没有预约单：妆娘/毛娘/修图师的档期、价格、定金都记这里'),
+    {label:'＋ 新预约',fn:`formAppt(null,{projectId:'${p.id}'})`});
+  var ss=sessionsOf(p.id);
+  var people={};
+  ss.forEach(function(s){ var k=s.contactId?('c:'+s.contactId):(s.photographerText?('t:'+s.photographerText):''); if(k) people[k]=(people[k]||0)+1; });
+  var locs={};
+  ss.forEach(function(s){ var k=s.locationId?('l:'+s.locationId):(s.locationText?('t:'+s.locationText):''); if(k) locs[k]=(locs[k]||0)+1; });
+  h+=card('参与人员 / 场地',
+    (Object.keys(people).length||Object.keys(locs).length)?
+      Object.keys(people).map(function(k){
+        var isC=k.indexOf('c:')===0, c=isC?get('contacts',k.slice(2)):null;
+        return listRow({t:esc(isC?(c?c.cn:'已删除联系人'):k.slice(2))+' '+badge('摄影师','b-accent'),d:'本项目 '+people[k]+' 场拍摄',r:isC?'›':'',onclick:isC?`go('contact',{contactId:'${k.slice(2)}',tab:'team'})`:''});
+      }).join('')
+      +Object.keys(locs).map(function(k){
+        var isL=k.indexOf('l:')===0, l=isL?get('locations',k.slice(2)):null;
+        return listRow({t:esc(isL?(l?l.name:'已删除场地'):k.slice(2))+' '+badge('场地','b-info'),d:'本项目 '+locs[k]+' 场拍摄',r:isL?'›':'',onclick:isL?`go('location',{locationId:'${k.slice(2)}',tab:'team'})`:''});
+      }).join('')
+      : emptyBox('暂无：在拍摄单里选摄影师与场地后自动汇总'),
+    {label:'＋ 新联系人',fn:'formContact()'});
+  return h;
+}
+function projTabShoot(p,st){
+  var h=`<div class="btn-row" style="margin-bottom:10px"><button class="btn sm" onclick="formSession(null,{projectId:'${p.id}',status:'计划中'})">＋ 新建拍摄单</button></div>`;
+  h+= st.ss.length? `<div class="card">`+st.ss.map(function(s){
+      var dl=delivsOf(s.id), od=dl.filter(function(d){return d.agreedDate&&isPast(d.agreedDate)&&d.status!=='已返图';}).length;
+      var cl=arr(s.checklist), ck=cl.filter(function(c){return c.checked;}).length;
+      return listRow({cls:od?'row-sec':'',
+        t:`${esc(s.date||'未定')} ${esc(s.time||'')} ${badge(s.method||'', 'b-accent')} ${badge(s.status||'',['已取消','已改期'].indexOf(s.status)>=0?'b-danger':(s.status==='已完成'?'b-ok':'b-info'))}`,
+        d:`${esc(s.photographerText||contactLabel(s.contactId)||'未定摄影师')} · ${esc(s.locationText||locationLabel(s.locationId)||'未定场地')}${dl.length?` · 交付 ${dl.length}${od?'（'+od+' 逾期）':''}`:''}`,
+        r:cl.length?`清单 ${ck}/${cl.length}`:'›',onclick:`go('session',{sessionId:'${s.id}',projectId:'${p.id}',tab:'projects'})`,
+        sw:SESSION_FLOW.indexOf(s.status)>=0?'session:'+s.id:''});
+    }).join('')+`</div>` : emptyBox('还没有拍摄单：日期、方式（约拍/互免/棚拍/场照）、摄影师、场地、定金都记这里');
+  return h;
+}
+function projTabFilm(p,st){
+  var h='';
+  var dl=[];
+  st.ss.forEach(function(s){ delivsOf(s.id).forEach(function(d){ dl.push({s:s,d:d}); }); });
+  h+=card('成片与后期',dl.length? dl.map(function(x){
+    var od=x.d.agreedDate&&isPast(x.d.agreedDate)&&x.d.status!=='已返图';
+    return listRow({cls:od?'row-sec':'',t:`${badge(x.d.type||'','b-accent')} ${esc(x.s.date||'')} ${badge(x.d.status||'',od?'b-danger':(x.d.status==='已返图'?'b-ok':'b-info'))}`,
+      d:`约定 ${x.d.agreedCount||'?'} 张 / ${esc(x.d.agreedDate||'未定')}${x.d.actualCount?' · 实际 '+x.d.actualCount+' 张':''} ${x.d.link?'· '+esc(String(x.d.link).slice(0,24)):''}`,
+      r:`<span class="badge" onclick="event.stopPropagation();delDelivConfirm('${x.d.id}')" style="cursor:pointer" title="删除">✕</span> `+(od?badge(dueText(x.d.agreedDate),'b-danger'):'<span class="muted">›</span>'),
+      onclick:`formDeliv('${x.d.id}')`, sw:'deliv:'+x.d.id});
+  }).join('') : emptyBox('还没有交付记录：原片/选片/精修/成片包的张数与期限（本期不上传照片，登记网盘链接或本地目录）'),
+    {label:'＋ 交付物',fn: st.ss.length?`formDeliv(null,{sessionId:'${st.ss[0].id}',type:'原片'})`:`toast('请先创建拍摄单')`});
+  var pubs=pubsOf(p.id);
+  h+=card('发布记录',pubs.length? pubs.map(function(b){
+    return listRow({t:`${badge(b.platform||'','b-pink')} ${esc(b.date||'')}`,d:`${linkOrText(b.url,b.url||'未填链接')}${b.stats?' · '+esc(b.stats):''}`,
+      r:`<span class="badge" onclick="event.stopPropagation();delPubConfirm('${b.id}')" style="cursor:pointer" title="删除">✕</span> <span class="muted">›</span>`,
+      onclick:`formPub('${b.id}')`});
+  }).join('') : emptyBox('未记录发布：平台、链接、文案、点赞收藏（手动）'),{label:'＋ 发布',fn:`formPub(null,{projectId:'${p.id}',date:todayISO()})`});
+  return h;
+}
+function projTabCost(p,st){
+  var es=expsOf(p.id);
+  var byCat={};
+  es.forEach(function(e){ byCat[e.category||'其他']=(byCat[e.category||'其他']||0)+num(e.amount); });
+  var assetCost=itemCostInProject(p.id);
+  var h=`<div class="card"><h3>预算与实际</h3>
+    ${kv('预算上限',p.budget?money(p.budget)+' 元':'')}
+    ${kv('已记账支出',`<b class="mono">${money(st.spent)}</b> 元`)}
+    ${kv('装备挂价合计',money(assetCost)+' 元 <span class="tiny muted">（台账内本项目条目价格之和，可能与实际支出重复）</span>')}
+    ${p.budget?`<div class="bar ${st.spent>num(p.budget)?'over':''}" style="margin-top:8px"><i style="width:${Math.min(100,Math.round(st.spent/num(p.budget)*100))}%"></i></div>
+      <div class="tiny muted">${st.spent>num(p.budget)?'超支 '+money(st.spent-num(p.budget))+' 元':'剩余 '+money(num(p.budget)-st.spent)+' 元'}</div>`:''}
+  </div>`;
+  h+=card('分类小计',Object.keys(byCat).length? `<div class="chips">${Object.keys(byCat).sort(function(a,b){return byCat[b]-byCat[a];}).map(function(k){return badge(k+' ¥'+money(byCat[k]),'b-info');}).join('')}</div>`:'<div class="muted tiny">暂无</div>',null);
+  var REF_NAME={item:'装备',appointment:'预约单',session:'拍摄单'};
+  h+=card('流水',es.length? es.map(function(e){
+      var auto = e.source==='自动';
+      var click = auto ? 'toast(' + esc(JSON.stringify('这条由'+(REF_NAME[e.refType]||'来源实体')+'自动生成，改源即同步')) + ')' : "formExpense('"+e.id+"')";
+      /* 1.1.2：手动流水补删除入口；自动流水不给删（改源即同步），避免两边数字打架 */
+      var delBtn = auto ? '' :
+        `<span class="badge" onclick="event.stopPropagation();delExpenseConfirm('${e.id}')" style="cursor:pointer" title="删除">✕</span>`;
+      return listRow({t:`${badge(e.category||'其他','b-info')} ${esc(e.note||'')}`,
+        d:`${esc(e.date||'')} ${auto?badge('自动','b-accent'):''}`,
+        r:`<b class="mono">${money(e.amount)}</b> ${delBtn}`,onclick:click});
+    }).join('') : emptyBox('暂无支出记录'),
+    {label:'＋ 记一笔',fn:`formExpense(null,{projectId:'${p.id}',date:todayISO()})`});
+  return h;
+}
+function delProjectConfirm(pid){
+  var p=get('projects',pid); if(!p) return;
+  var st=projectStats(p);
+  confirmBox('删除项目','将删除「'+p.name+'」及其 '+st.ss.length+' 张拍摄单、交付记录、预约单、费用与待办。装备台账中的条目会保留（只解除关联）。此操作不可撤销，建议先到「我的-导出备份」。',function(){
+    deleteProject(p); go('projects',{tab:'projects'}); toast('项目已删除');
+  },'确认删除');
+}
+/** 手机上整行可点，误触概率高 → 勾选与删除都走可撤销入口 */
+function toggleTodo(id){
+  var t=get('todos',id); if(!t) return;
+  applyAction((t.done?'待办重新打开：':'已完成：')+t.title,function(){
+    var c=get('todos',id); if(c){ c.done=!c.done; put('todos',c); }
+  });
+}
+function delTodo(id){
+  var t=get('todos',id); if(!t) return;
+  applyAction('已删除待办：'+t.title,function(){ del('todos',id); });
+}
+/* =========================================================
+   装备台账（M2/M3/M4 共用一张表）
+   ========================================================= */
+function assetExpiryWarn(i){
+  if(i.kind==='美瞳'&&i.expiresAt&&isPast(i.expiresAt)) return '美瞳已过期 '+(i.openedAt?('（开封 '+i.openedAt+'）'):'');
+  if(i.kind==='美瞳'&&i.expiresAt&&dayDiff(i.expiresAt)<=30) return '美瞳将于 '+dueText(i.expiresAt)+' 到期';
+  if(i.kind==='消耗品'&&num(i.lowQty)>0&&num(i.qty)<=num(i.lowQty)) return '库存偏低：'+(i.qty||0)+' ≤ '+(i.lowQty||0);
+  return '';
+}
+function assetRow(i,showKind){
+  var w=assetExpiryWarn(i);
+  return listRow({
+    cls:w?'row-sec':'',
+    t:`${esc(i.name)} ${statusBadge(i.status)}`,
+    d:`${showKind&&i.kind?'<span class="badge">'+esc(i.kind)+(i.category?'/'+esc(i.category):'')+'</span> ':''}${esc(charLabel(i.characterId))} ${i.size?'· '+esc(i.size):''} ${i.price?'· ¥'+money(i.price):''}${i.storage?' · 放:'+esc(i.storage):''}${isDisposalStatus(i.status)&&i.dispTo?' · 去向:'+esc(i.dispTo):''}`,   /* 1.1.2：非处置态不显示残留去向 */
+    r:w?badge(w,'b-danger'):'›',
+    onclick:`go('asset',{itemId:'${i.id}',tab:'assets'})`,
+    sw:itemSwappable(i)?'item:'+i.id:''
+  });
+}
+function vAssets(){
+  var list=DB.items.slice();
+  if(S.assetTab&&S.assetTab!=='全部') list=list.filter(function(i){return i.kind===S.assetTab;});
+  if(S.assetAvailable) list=list.filter(function(i){return TERMINAL_STATUS.indexOf(i.status)<0;});
+  if(S.assetStatus) list=list.filter(function(i){return i.status===S.assetStatus;});
+  if(S.assetRole) list=list.filter(function(i){return i.characterId===S.assetRole;});
+  if(S.assetQ){ var q=String(S.assetQ).toLowerCase();
+    list=list.filter(function(i){ return (i.name+' '+(i.kind||'')+' '+(i.category||'')+' '+(i.shop||'')+' '+(i.storage||'')+' '+charLabel(i.characterId)).toLowerCase().indexOf(q)>=0; }); }
+  list=sortDesc(list,'updated_at');
+  var term=DB.items.filter(function(i){return TERMINAL_STATUS.indexOf(i.status)>=0;}).length;
+  var h=`<div class="card flat" style="padding:10px">
+    <input type="text" id="qAsset" placeholder="搜索装备：名称 / 店铺 / 存放位置 / 角色" value="${esc(S.assetQ)}" oninput="S.assetQ=this.value;render()" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card)">
+    <div class="pill-row" data-sk="kind" style="margin-top:6px">${['全部'].concat(ASSET_KINDS).map(function(k){
+      var n=k==='全部'?DB.items.length:DB.items.filter(function(i){return i.kind===k;}).length;
+      return `<button class="chip ${S.assetTab===k?'on':''}" onclick="S.assetTab='${k}';render()">${k} ${n}</button>`;
+    }).join('')}</div>
+    <div class="pill-row" data-sk="filter">
+      <button class="chip ${S.assetAvailable?'on':''}" onclick="S.assetAvailable=!S.assetAvailable;render()" title="隐藏留作纪念与报废/已售">只看在手</button>
+      <select class="f-sel" onchange="S.assetStatus=this.value;render()">
+        <option value="">全部状态</option>${ITEM_STATUS.map(function(s){return `<option value="${s}" ${S.assetStatus===s?'selected':''}>${s} ${DB.items.filter(function(i){return i.status===s;}).length}</option>`;}).join('')}</select>
+      <select class="f-sel" onchange="S.assetRole=this.value;render()">
+        <option value="">全部角色</option>${DB.characters.map(function(c){return `<option value="${c.id}" ${S.assetRole===c.id?'selected':''}>${esc(charLabel(c.id))}</option>`;}).join('')}
+        <option value="__none" ${S.assetRole==='__none'?'selected':''}>通用</option></select>
+    </div>
+  </div>`;
+  if(S.assetRole==='__none') list=list.filter(function(i){return !i.characterId;});
+  h+=swipeHintBox();
+  h+= list.length? `<div class="card"><h3>结果<span class="cnt">${list.length} 条 · 挂价 ${money(sum(list,'price'))} 元</span></h3>${list.map(function(i){return assetRow(i,S.assetTab==='全部');}).join('')}</div>`
+    : emptyBox('没有符合条件的装备');
+  if(term&&!S.assetAvailable) h+=`<div class="muted tiny" style="text-align:center">另有 ${term} 条已处置（留作纪念 / 报废/已售）记录，在上方状态里可以筛出来</div>`;
+  return h+`<button class="fab" onclick="formItem()">＋</button>`;
+}
+function vAsset(){
+  var i=get('items',S.itemId);
+  if(!i) return emptyBox('装备不存在',{label:'回到台账',fn:"go('assets',{tab:'assets'})"});
+  var nxt=arr(STATUS_NEXT[i.status]);
+  var h=`<div class="card"><div class="stage-head"><h2>${esc(i.name)}</h2>
+      <span class="act" onclick="delItemConfirm('${i.id}')" style="color:var(--danger);cursor:pointer;font-size:12px">删除</span></div>
+    <div>${statusBadge(i.status)} ${badge(i.kind||'C服')}${i.category?' '+badge(i.category):''} ${i.source?badge(i.source,'b-info'):''}</div>
+    <div class="pill-row" data-sk="advance" style="margin-top:8px">${nxt.map(function(s){var back=ITEM_SWIPE_PREV[i.status]===s;return `<button class="chip${back?' back':''}" onclick="advanceStatus('${i.id}','${s}')">${back?'退回「'+s+'」':'推进到「'+s+'」'}</button>`;}).join('')}</div>
+    ${nxt.length?'':'<div class="muted tiny">已是终态；如需改回，请在编辑里用「强制跳转」。</div>'}
+    <div class="btn-row" style="margin-top:10px"><button class="btn sm" onclick="formItem('${i.id}')">编辑</button>
+      <button class="btn sm gray" onclick="go('project',{projectId:'${arr(i.projectIds)[0]||''}',tab:'projects'})" ${i.projectIds?'':'disabled'}>看项目</button></div>
+  </div>`;
+  var w=assetExpiryWarn(i);
+  if(w) h+=`<div class="danger-box">${esc(w)}</div>`;
+  var rows='';
+  rows+=kve('所属角色',charLabel(i.characterId)+(i.characterId?'':'（通用）'));
+  rows+=kv('关联项目',arr(i.projectIds).map(function(pid){return `<a onclick="go('project',{projectId:'${pid}',tab:'projects'})" style="cursor:pointer">${esc(projLabel(pid))}</a>`;}).join(' ')||'');
+  rows+=kve('尺码 / 数量',[(i.size||''),(i.kind==='消耗品'?'库存 '+(i.qty||0)+'（阈值 '+(i.lowQty||0)+'）':'')].filter(Boolean).join(' · '));
+  rows+=kv('价格',i.price?money(i.price)+' 元':'');
+  rows+=kv('渠道 / 链接',[i.shop?esc(i.shop):'',i.link?linkOrText(i.link,i.link):''].filter(Boolean).join(' '));
+  rows+=kve('下单 / 到手',[i.orderDate,i.arrivedDate].filter(Boolean).join(' → '));
+  rows+=kve('存放位置',i.storage);
+  if(i.kind==='道具'){
+    rows+=kve('制作进度',[i.makeStage,i.makeProgress!=null?i.makeProgress+'%':''].filter(Boolean).join(' '));
+    rows+=kve('易损/运输',i.fragile);
+  }
+  if(i.kind==='假发'){
+    rows+=kve('毛色 / 长度',[i.wigColor,i.wigLen].filter(Boolean).join(' · '));
+    rows+=kve('造型',[i.wigStyle,i.wigBy?'by '+i.wigBy:''].filter(Boolean).join(' '));
+  }
+  if(i.kind==='美瞳'){
+    rows+=kve('品牌/花色',[i.clBrand,i.clDia?'直径 '+i.clDia:''].filter(Boolean).join(' · '));
+    rows+=kve('度数','L '+(i.powerL||'0')+' / R '+(i.powerR||'0')+(i.throwType?' · '+i.throwType:''));
+    rows+=kve('开封 / 到期',[i.openedAt,i.expiresAt].filter(Boolean).join(' → '));
+  }
+  if(isDisposalStatus(i.status)){
+    rows+=kve('最后怎么了',i.status==='外借中'?'借出去了':i.dispKind);
+    rows+=kv('去向（CN）',i.dispTo?esc(i.dispTo):badge('未记录，请补','b-danger'));
+    /* v1.2.2.2（P2-1）：加 status 判断，与 soldBack() 完全同一口径 ——
+       免得「外借中」这类也带 dispKind 的状态显示出一个首页并不认的回血数 */
+    rows+=kve('日期 / 售价',[i.dispDate,(i.status==='报废/已售'&&i.dispKind==='卖了'&&i.dispPrice)?'回血 '+money(i.dispPrice)+' 元':''].filter(Boolean).join(' · '));
+    rows+=kve('原因',i.dispReason);
+  }
+  h+=card('台账信息',rows,null);
+  if(arr(i.fittings).length) h+=card('试装记录',i.fittings.map(function(f){return `<div class="kv"><div class="k">记录</div><div class="v">${esc(f)}</div></div>`;}).join(''),{label:'编辑',fn:`formItem('${i.id}')`});
+  h+=card('参考 / 实拍链接',refLinks(i.refLinks),{label:'编辑',fn:`formItem('${i.id}')`});
+  if(i.note) h+=card('备注',`<div style="font-size:14px">${esc(i.note)}</div>`,null);
+  var es=DB.expenses.filter(function(e){return e.refType==='item'&&e.refId===i.id;});
+  if(es.length) h+=card('费用流水',es.map(function(e){return `<div class="kv"><div class="k">${esc(e.date)}</div><div class="v">${badge(e.category,'b-info')} ${money(e.amount)} 元 · ${esc(e.note||'')} ${e.projectId?'· '+esc(projLabel(e.projectId)):''}</div></div>`;}).join(''),null);
+  return h;
+}
+/* 1.1.2：删除 iLink。它两个分支返回同一个值、是空操作，真正的转义在 linkOrText 里完成 */
+/** 装备状态统一入口。opts.quiet：滑动/撤销路径用，由调用方负责 render 与提示 */
+function advanceStatus(iid,st,opts){
+  var i=get('items',iid); if(!i) return false;
+  opts=opts||{};
+  if(isDisposalStatus(st)){ formItem(iid,{status:st}); toast('请补记去向（CN）与日期'); return false; }
+  i.status=st; i.updated_at=nowStamp();
+  /* v1.2 联动：滑到「已下单/制作中」顺手补今天，自动流水的日期才不会落在无日期的旧数据上 */
+  if(st==='已下单/制作中'&&!i.orderDate) i.orderDate=todayISO();
+  if(st==='已到货'&&!i.arrivedDate) i.arrivedDate=todayISO();
+  if(!isDisposalStatus(st)){ i.dispType=''; i.dispKind=''; i.dispTo=''; i.dispDate=''; i.dispPrice=null; i.dispReason=''; }
+  put('items',i); syncItemExpense(i);
+  if(!opts.quiet){ save(); render(); toast('「'+i.name+'」已推进到「'+st+'」'); }
+  return true;
+}
+function delItemConfirm(iid){
+  var i=get('items',iid); if(!i) return;
+  confirmBox('删除装备','将删除「'+i.name+'」及其自动生成的费用流水。',function(){
+    deleteItem(i); go('assets',{tab:'assets'}); toast('已删除');
+  },'确认删除');
+}
+
+/* =========================================================
+   协作：联系人 + 场地（M5 / M6）
+   ========================================================= */
+function vTeam(){
+  var h=`<div class="tabs"><button class="${S.teamTab!=='locations'?'on':''}" onclick="S.teamTab='contacts';render()">联系人</button>
+    <button class="${S.teamTab==='locations'?'on':''}" onclick="S.teamTab='locations';render()">场地</button></div>`;
+  if(S.teamTab==='locations'){
+    h+=`<div class="card flat" style="padding:10px">
+      <input type="text" id="qLoc" placeholder="搜索场地 / 地址" value="${esc(S.locationQ||'')}" oninput="S.locationQ=this.value;render()" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card)"></div>`;
+    var ls=DB.locations.slice();
+    if(S.locationQ){ var q=String(S.locationQ).toLowerCase(); ls=ls.filter(function(l){return (l.name+' '+(l.address||'')+' '+(l.type||'')).toLowerCase().indexOf(q)>=0;}); }
+    h+= ls.length? `<div class="card"><h3>场地<span class="cnt">${ls.length} 处</span></h3>`+ls.map(function(l){
+      var n=DB.sessions.filter(function(s){return s.locationId===l.id;}).length;
+      return listRow({t:esc(l.name)+' '+badge(l.type||'场地','b-info'),d:[l.address,l.fee?'费用 '+money(l.fee)+' 元':'',n?'拍过 '+n+' 场':''].filter(Boolean).join(' · '),r:'›',onclick:`go('location',{locationId:'${l.id}',tab:'team'})`});
+    }).join('')+`</div>` : emptyBox('还没有场地库：外景/棚拍/漫展的地址、费用、设施、风险都可登记',{label:'＋ 新场地',fn:'formLocation()'});
+    return h+`<button class="fab" onclick="formLocation()">＋</button>`;
+  }
+  h+=`<div class="card flat" style="padding:10px">
+    <input type="text" id="qCon" placeholder="搜索 CN / 平台 ID / 备注" value="${esc(S.contactQ||'')}" oninput="S.contactQ=this.value;render()" style="width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card)">
+    <div class="pill-row" data-sk="crole" style="margin-top:8px">${[''].concat(ROLES).map(function(r){
+      return `<button class="chip ${(S.contactRole||'')===r?'on':''}" onclick="S.contactRole='${r}';render()">${r||'全部'}${r?' '+DB.contacts.filter(function(c){return arr(c.roles).indexOf(r)>=0;}).length:''}</button>`;
+    }).join('')}</div></div>`;
+  var cs=DB.contacts.slice();
+  if(S.contactRole) cs=cs.filter(function(c){return arr(c.roles).indexOf(S.contactRole)>=0;});
+  if(S.contactQ){ var q2=String(S.contactQ).toLowerCase();
+    cs=cs.filter(function(c){ return (c.cn+' '+(c.phone||'')+' '+(c.note||'')+' '+arr(c.platforms).map(function(p){return p.label+p.url;}).join(' ')).toLowerCase().indexOf(q2)>=0; }); }
+  h+= cs.length? `<div class="card"><h3>联系人<span class="cnt">${cs.length} 位</span></h3>`+cs.map(function(c){
+    var hist=historyOfContact(c.id);
+    return listRow({cls:c.warning?'row-sec':'',t:`${esc(c.cn)} ${arr(c.roles).map(function(r){return badge(r,'b-accent');}).join(' ')}${c.warning?badge('避雷','b-danger'):''}`,
+      d:`${arr(c.platforms).slice(0,2).map(function(p){return esc(p.label)+' '+esc(p.url);}).join(' / ')}${c.priceNote?' · '+esc(c.priceNote):''}`,
+      r:hist.sessions.length?hist.sessions.length+' 次合作':'›',onclick:`go('contact',{contactId:'${c.id}',tab:'team'})`});
+  }).join('')+`</div>` : emptyBox('还没有联系人：摄影师 / 妆娘 / 毛娘 / 修图师 / 场地主，平台 ID 与价格都记这里',{label:'＋ 新联系人',fn:'formContact()'});
+  return h+`<button class="fab" onclick="formContact()">＋</button>`;
+}
+function historyOfContact(cid){
+  return {
+    sessions:DB.sessions.filter(function(s){return s.contactId===cid;}),
+    appts:DB.appointments.filter(function(a){return a.contactId===cid;})
+  };
+}
+function vContact(){
+  var c=get('contacts',S.contactId);
+  if(!c) return emptyBox('联系人不存在',{label:'回到协作',fn:"go('team',{tab:'team',teamTab:'contacts'})"});
+  var hist=historyOfContact(c.id);
+  var h=`<div class="card"><div class="stage-head"><h2>${esc(c.cn)}</h2>
+    <span class="act" onclick="delContactConfirm('${c.id}')" style="color:var(--danger);cursor:pointer;font-size:12px">删除</span></div>
+    <div class="chips">${arr(c.roles).map(function(r){return badge(r,'b-accent');}).join(' ')}${c.warning?badge('避雷/谨慎','b-danger'):''}${c.rating?badge('评价：'+c.rating,'b-ok'):''}</div>
+    ${c.warnReason?`<div class="danger-box" style="margin-top:8px">${esc(c.warnReason)}</div>`:''}
+    <div class="btn-row" style="margin-top:10px"><button class="btn sm" onclick="formContact('${c.id}')">编辑</button>
+      <button class="btn sm gray" onclick="newApptFor('${c.id}')">＋ 新预约</button></div>
+  </div>`;
+  var rows='';
+  rows+=kv('平台 ID',arr(c.platforms).length? arr(c.platforms).map(function(p){
+    return `<div style="margin-bottom:3px">${esc(p.label||'平台')}：<a onclick="copyText(${esc(JSON.stringify(p.url||''))})" style="cursor:pointer;text-decoration:underline">${esc(p.url||'—')}</a></div>`;
+  }).join('')+'<div class="tiny muted">点 ID 可直接复制</div>' : '');
+  rows+=kv('直接联系',c.phone?(esc(c.phone)+` <span class="badge" onclick="copyText(${esc(JSON.stringify(c.phone))})" style="cursor:pointer">复制</span>`):'');
+  rows+=kv('作品集',c.portfolio?linkOrText(c.portfolio):'');
+  rows+=kve('价格',c.priceNote);
+  rows+=kve('备注',c.note);
+  h+=card('联系方式（本机存储）',rows+'<div class="tiny muted" style="margin-top:6px">点击 ID 复制，便于粘到微信里联系</div>',null);
+  var totalAppt=sum(hist.appts,'fee');
+  h+=card('合作历史',
+    (hist.sessions.length||hist.appts.length)?
+      hist.sessions.map(function(s){return listRow({t:`拍摄 ${esc(s.date||'')} ${badge(s.method||'','b-accent')} ${badge(s.status||'','')}`,d:esc(projLabel(s.projectId)),r:s.fee?'¥'+money(s.fee)+' 成交':'',onclick:`go('session',{sessionId:'${s.id}',projectId:'${s.projectId}',tab:'projects'})`});}).join('')
+      + hist.appts.map(function(a){return listRow({t:`${esc(a.type||'')} ${esc(a.datetime||'')}`,d:esc(projLabel(a.projectId))+' · '+badge(a.status||'',''),r:a.fee?'¥'+money(a.fee):'',onclick:`go('project',{projectId:'${a.projectId}',tab:'projects'})`});}).join('')
+      +`<div class="tiny muted" style="margin-top:6px">共 ${hist.sessions.length} 次拍摄 · ${hist.appts.length} 张预约 · 约定金额合计 ${money(totalAppt+sum(hist.sessions,'fee'))} 元</div>`
+    : emptyBox('还没有合作记录：在拍摄单或预约单里选到这个人，就会自动汇总'),null);
+  return h;
+}
+function delContactConfirm(cid){
+  var c=get('contacts',cid); if(!c) return;
+  var hist=historyOfContact(cid);
+  confirmBox('删除联系人','将删除「'+c.cn+'」。历史拍摄单/预约单会保留（显示为"已删除联系人"）。',function(){
+    del('contacts',cid); go('team',{tab:'team',teamTab:'contacts'}); toast('已删除');
+  },'确认删除');
+}
+function vLocation(){
+  var l=get('locations',S.locationId);
+  if(!l) return emptyBox('场地不存在',{label:'回到协作',fn:"go('team',{tab:'team',teamTab:'locations'})"});
+  var ss=DB.sessions.filter(function(s){return s.locationId===l.id;});
+  var h=`<div class="card"><div class="stage-head"><h2>${esc(l.name)}</h2>
+    <span class="act" onclick="delLocationConfirm('${l.id}')" style="color:var(--danger);cursor:pointer;font-size:12px">删除</span></div>
+    ${badge(l.type||'场地','b-info')}
+    <div class="btn-row" style="margin-top:10px"><button class="btn sm" onclick="formLocation('${l.id}')">编辑</button>
+      <button class="btn sm gray" onclick="formSession(null,{locationId:'${l.id}',status:'计划中'})">＋ 在这里拍</button></div></div>`;
+  var rows='';
+  rows+=kve('地址',l.address); rows+=kve('集合点',l.gather); rows+=kv('费用',l.fee?money(l.fee)+' 元':'');
+  rows+=kve('交通/停车',l.traffic); rows+=kve('设施',l.facilities); rows+=kve('最佳时段',l.bestHours);
+  h+=card('场地信息',rows,null);
+  if(l.risk) h+=card('风险提示',`<div class="warn-box" style="margin:0">${esc(l.risk)}</div>`,null);
+  h+=card('参考链接',refLinks(l.refLinks),{label:'编辑',fn:`formLocation('${l.id}')`});
+  h+=card('在这里拍过什么',ss.length? ss.map(function(s){
+    return listRow({t:`${esc(s.date||'')} ${badge(s.method||'','b-accent')}`,d:esc(projLabel(s.projectId))+' · '+esc(s.status||''),r:'›',onclick:`go('session',{sessionId:'${s.id}',projectId:'${s.projectId}',tab:'projects'})`});
+  }).join('') : emptyBox('还没有拍摄记录关联到这里'),null);
+  if(l.note) h+=card('备注',`<div style="font-size:14px">${esc(l.note)}</div>`,null);
+  return h;
+}
+function delLocationConfirm(lid){
+  var l=get('locations',lid); if(!l) return;
+  confirmBox('删除场地','将删除「'+l.name+'」，历史拍摄单仍保留手填场地文字。',function(){
+    del('locations',lid); go('team',{tab:'team',teamTab:'locations'}); toast('已删除');
+  },'确认删除');
+}
+
+/* =========================================================
+   拍摄单详情 + 装备清单（M7）
+   ========================================================= */
+function checklistText(i){ return i.name+'（'+(i.kind||'')+(i.storage?' · '+i.storage:'')+'）'; }
+function syncChecklist(sid){
+  var s=get('sessions',sid); if(!s) return;
+  var old={};
+  arr(s.checklist).forEach(function(c){ if(c&&c.text) old[c.text]=c; });
+  var desired=[];
+  itemsOfProject(s.projectId).filter(function(i){ return TERMINAL_STATUS.indexOf(i.status)<0; })
+    .sort(function(a,b){ return String(a.kind).localeCompare(String(b.kind),'zh'); })
+    .forEach(function(i){ desired.push({text:checklistText(i),itemId:i.id}); });
+  EMERGENCY_KIT.forEach(function(k){ desired.push({text:'应急包·'+k,kit:true}); });
+  var out=desired.map(function(d){
+    var o=old[d.text];
+    if(o){ delete old[d.text]; return Object.assign(o,{text:d.text,itemId:d.itemId||null,kit:!!d.kit}); }
+    return {id:uid('c'),text:d.text,itemId:d.itemId||null,kit:!!d.kit,checked:false};
+  });
+  /* 用户手动加的项目保留；已脱离本项目的装备行自动消失 */
+  Object.keys(old).forEach(function(t){
+    var c=old[t];
+    if(!c.itemId) out.push(c);
+  });
+  s.checklist=out; s.updated_at=nowStamp(); put('sessions',s);
+}
+/* v1.2 联动：项目装备增减或处置后，清单不再是最新的 —— 数一下差几处，提醒一键同步 */
+function checklistStale(s){
+  var cl=arr(s&&s.checklist); if(!cl.length) return 0;
+  var want={},have={};
+  itemsOfProject(s.projectId).filter(function(i){ return TERMINAL_STATUS.indexOf(i.status)<0; })
+    .forEach(function(i){ want[checklistText(i)]=1; });
+  cl.forEach(function(c){ if(c&&c.itemId) have[c.text]=1; });
+  var n=0,k;
+  for(k in want) if(!have[k]) n++;
+  for(k in have) if(!want[k]) n++;
+  return n;
+}
+function vSession(){
+  var s=get('sessions',S.sessionId);
+  if(!s) return emptyBox('拍摄单不存在',{label:'回到项目',fn:"go('projects',{tab:'projects'})"});
+  var p=get('projects',s.projectId);
+  var dl=delivsOf(s.id);
+  var cl=arr(s.checklist), ck=cl.filter(function(c){return c.checked;}).length;
+  var h=`<div class="card"><div class="stage-head"><h2>${esc(s.date||'未定')} ${esc(s.time||'')}</h2></div>
+    <div class="chips">${badge(s.method||'','b-accent')}${badge(s.status||'', ['已取消','已改期'].indexOf(s.status)>=0?'b-danger':(s.status==='已完成'?'b-ok':'b-info'))}${p?badge(p.name,'b-pink'):''}</div>
+    <div class="pill-row" data-sk="sstatus" style="margin-top:8px">${SESSION_STATUS.map(function(st){return `<button class="chip ${s.status===st?'on':''}" onclick="setSessionStatus('${s.id}','${st}')">${st}</button>`;}).join('')}</div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn sm" onclick="formSession('${s.id}')">编辑</button>
+      <button class="btn sm gray" onclick="go('project',{projectId:'${s.projectId}',tab:'projects'})">回项目</button>
+      <button class="btn sm danger" onclick="delSessionConfirm('${s.id}')">删除</button></div>
+  </div>`;
+  var rows='';
+  /* 1.1.2 修复：联系人/场地被删后 contactId 残留 → 这里会渲染成一个文字为空的可点链接 */
+  var ph=s.photographerText||(s.contactId?(contactLabel(s.contactId)||'已删除联系人'):'');
+  rows+=kv('摄影师',s.contactId?`<a onclick="go('contact',{contactId:'${s.contactId}',tab:'team'})" style="cursor:pointer;text-decoration:underline">${esc(ph)}</a>`:esc(ph));
+  var lc=s.locationText||(s.locationId?(locationLabel(s.locationId)||'已删除场地'):'');
+  rows+=kv('场地',s.locationId?`<a onclick="go('location',{locationId:'${s.locationId}',tab:'team'})" style="cursor:pointer;text-decoration:underline">${esc(lc)}</a>`:esc(lc));
+  rows+=kv('费用',s.fee?('总价 '+money(s.fee)+' 元'+(s.deposit?'（定金 '+money(s.deposit)+'）':'')):'');
+  if(s.changeReason) rows+=kv('改期/取消',esc(s.changeReason));
+  if(s.timeline) rows+=kv('时间线',esc(s.timeline));
+  if(s.backup) rows+=kv('雨备',esc(s.backup));
+  if(s.note) rows+=kv('备注',esc(s.note));
+  /* v1.2 联动：预约单里已有的档期直接拼成时间线草稿，不用手抄 */
+  h+=card('安排',rows,{label:s.timeline?'重新生成时间线':'按预约生成时间线',fn:`suggestTimeline('${s.id}')`});
+
+  /* 装备清单 */
+  var stale=checklistStale(s);
+  h+=`<div class="card"><h3>出装清单<span class="cnt">${ck}/${cl.length}</span>
+      <span class="act" onclick="regenChecklist('${s.id}')">重新生成</span></h3>
+      ${stale?`<div class="info-box" style="margin-bottom:8px">项目装备有 ${stale} 处变动还没同步到清单 · <b onclick="regenChecklist('${s.id}')" style="cursor:pointer;text-decoration:underline">点这里更新</b></div>`:''}
+      ${cl.length?`<div class="bar" style="margin-bottom:8px"><i style="width:${Math.round(ck/Math.max(1,cl.length)*100)}%"></i></div>`:''}
+      <div class="tiny muted" style="margin-bottom:6px">由项目装备 + 应急包默认项生成，可手动加项；整行都能点，不用再瞄小方框</div>
+      ${cl.map(function(c){
+        var bi=c.itemId?get('items',c.itemId):null;
+        var out=bi&&bi.status==='外借中';
+        return `<div class="check-row ${c.checked?'done':''}" onclick="toggleCheck('${s.id}','${c.id}')">
+          <input type="checkbox" ${c.checked?'checked':''}>
+          <div class="txt">${c.kit?badge('应急','b-warn')+' ':''}${out?badge('已借给 '+(bi.dispTo||'未记 CN'),'b-danger')+' ':''}${esc(c.text)}</div>
+          <span class="badge" onclick="event.stopPropagation();delCheck('${s.id}','${c.id}')" style="cursor:pointer">✕</span></div>`;
+      }).join('')}
+      <div class="btn-row" style="margin-top:10px"><button class="btn sm ghost" onclick="addCheckItem('${s.id}')">＋ 加一项</button>
+      <button class="btn sm gray" onclick="resetChecks('${s.id}')">全部清空打勾</button></div>
+  </div>`;
+  if(!cl.length) h+=`<div class="info-box">清单为空：点「重新生成」可从项目装备与应急包生成。</div>`;
+
+  /* 交付物 */
+  h+=`<div class="card"><h3>拍后交付<span class="cnt">${dl.length}</span><span class="act" onclick="formDeliv(null,{sessionId:'${s.id}',type:'原片'})">＋ 新增</span></h3>`+
+    (s.status==='已完成'&&!dl.some(function(d){return d.type==='原片';})
+      ? `<div class="info-box" style="margin-bottom:8px">已拍完但还没登记原片 · <b onclick="addRawDeliv('${s.id}')" style="cursor:pointer;text-decoration:underline">＋ 记一条原片交付（默认 7 天内返片）</b></div>`:'')+
+    (dl.length? dl.map(function(d){
+      var od=d.agreedDate&&isPast(d.agreedDate)&&d.status!=='已返图';
+      return listRow({cls:od?'row-sec':'',t:`${badge(d.type||'','b-accent')} ${badge(d.status||'',od?'b-danger':(d.status==='已返图'?'b-ok':'b-info'))} ${d.agreedCount?'约定 '+d.agreedCount+' 张':''}`,
+        d:`约定 ${esc(d.agreedDate||'未定')}${d.deliveredDate?' · 实际 '+esc(d.deliveredDate):''} ${d.link?'· '+esc(String(d.link).slice(0,30)):''}`,
+        r:od?badge(dueText(d.agreedDate),'b-danger'):'›',onclick:`formDeliv('${d.id}')`,sw:'deliv:'+d.id});
+    }).join('') : emptyBox('未登记：原片/选片/精修/成片包。本期不传照片，只记约定张数、期限、网盘链接或本地目录',
+      {label:'＋ 记原片交付',fn:`addRawDeliv('${s.id}')`}))+`</div>`;
+  if(p) h+=`<div class="card"><h3>关联发布</h3>`+(pubsOf(p.id).length?pubsOf(p.id).map(function(b){
+    return listRow({t:badge(b.platform||'','b-pink')+' '+esc(b.date||''),d:linkOrText(b.url,b.url||'未填链接'),r:'›',onclick:`formPub('${b.id}')`});
+  }).join(''):emptyBox('该项目还没有发布记录',{label:'＋ 发布',fn:`formPub(null,{projectId:'${p.id}',date:todayISO()})`}))+`</div>`;
+  return h;
+}
+function doSetSession(s,st){
+  s.status=st; s.updated_at=nowStamp(); put('sessions',s); syncSessionExpense(s);
+}
+function setSessionStatus(sid,st){
+  var s=get('sessions',sid); if(!s) return;
+  if(['已改期','已取消'].indexOf(st)>=0 && !s.changeReason){ formSession(sid,{status:st}); toast('请填改期/取消原因'); return; }
+  applyAction('拍摄单 '+(s.date||'')+' → '+st+autoStageText(s,st),function(){ doSetSession(s,st); autoStage(s); },{plain:true});
+}
+/* v1.2 联动：拍摄定了档、拍完了，项目不该还停在「计划中」 */
+function autoStage(s){
+  if(['已确认','已完成'].indexOf(s.status)<0) return false;
+  var p=get('projects',s.projectId);
+  if(!p||p.stage!=='计划中') return false;
+  doSetStage(p,'拍摄中');
+  return true;
+}
+function autoStageText(s,st){
+  var will=['已确认','已完成'].indexOf(st)>=0;
+  var p=get('projects',s.projectId);
+  return (will&&p&&p.stage==='计划中')?' · 项目自动转「拍摄中」':'';
+}
+function toggleCheck(sid,cid){
+  var s=get('sessions',sid); if(!s) return;
+  arr(s.checklist).forEach(function(c){ if(c.id===cid) c.checked=!c.checked; });
+  put('sessions',s); render();
+}
+function delCheck(sid,cid){
+  var s=get('sessions',sid); if(!s) return;
+  s.checklist=arr(s.checklist).filter(function(c){return c.id!==cid;}); put('sessions',s); render();
+}
+function resetChecks(sid){
+  var s=get('sessions',sid); if(!s) return;
+  arr(s.checklist).forEach(function(c){ c.checked=false; }); put('sessions',s); render(); toast('已重置打勾');
+}
+function addCheckItem(sid){
+  openForm({
+    title:'加入清单项',center:true,
+    fields:[{k:'text',l:'物品/事项',req:1,ph:'如：折叠凳 / 假毛梳 / 备用鞋带'}],
+    onSave:function(V){
+      var s=get('sessions',sid); if(!s) return;
+      s.checklist=arr(s.checklist).concat([{id:uid('c'),text:String(V.text).trim(),checked:false}]);
+      put('sessions',s); render();
+    }
+  });
+}
+function regenChecklist(sid){ syncChecklist(sid); render(); toast('清单已按项目装备+应急包更新'); }
+function delSessionConfirm(sid){
+  var s=get('sessions',sid); if(!s) return;
+  confirmBox('删除拍摄单','将删除该拍摄单及其交付记录、自动生成的摄影费用。',function(){
+    deleteSession(s); go('project',{projectId:s.projectId,tab:'projects'}); toast('已删除');
+  },'确认删除');
+}
+
+/* =========================================================
+   我的：统计 + 备份（M13）
+   ========================================================= */
+function vMine(){
+  var byMonth={},byCat={},byYear={};
+  DB.expenses.forEach(function(e){
+    var m=String(e.date||'').slice(0,7), y=String(e.date||'').slice(0,4);
+    byMonth[m]=(byMonth[m]||0)+num(e.amount); byCat[e.category||'其他']=(byCat[e.category||'其他']||0)+num(e.amount);
+    byYear[y]=(byYear[y]||0)+num(e.amount);
+  });
+  var total=sum(DB.expenses,'amount');
+  var back=DB.items.reduce(function(t,i){ return t+soldBack(i); },0);
+  var costList=Object.keys(byCat).sort(function(a,b){return byCat[b]-byCat[a];});
+  var maxc=costList.length?byCat[costList[0]]:1;
+  var h=`<div class="grid2" style="margin-bottom:12px">
+    <div class="stat"><div class="n">${money(total)}</div><div class="l">累计支出（元）</div></div>
+    <div class="stat"><div class="n">${money(back)}</div><div class="l">出物回血（元）</div></div>
+    <div class="stat"><div class="n">${DB.projects.length} / ${DB.items.length}</div><div class="l">项目 / 装备条目</div></div>
+    <div class="stat"><div class="n">${DB.contacts.length} / ${DB.locations.length}</div><div class="l">联系人 / 场地</div></div>
+  </div>`;
+  h+=card('按分类',costList.length? costList.map(function(k){
+    return `<div class="row" style="cursor:default"><div class="main"><div class="t">${esc(k)}</div>
+      <div class="bar" style="margin-top:4px"><i style="width:${Math.round(byCat[k]/maxc*100)}%"></i></div></div>
+      <div class="r mono">${money(byCat[k])} 元<br><span class="tiny">${total?Math.round(byCat[k]/total*100):0}%</span></div></div>`;
+  }).join(''):'<div class="muted tiny">暂无支出流水</div>',null);
+  var ms=Object.keys(byMonth).sort().reverse().slice(0,12);
+  h+=card('按月',ms.length? `<div class="chips">${ms.map(function(m){return badge(m+' ¥'+money(byMonth[m]),'b-info');}).join('')}</div>`:'<div class="muted tiny">暂无</div>',null);
+  var byProj=DB.projects.map(function(p){ return {p:p,v:sum(expsOf(p.id),'amount')}; }).sort(function(a,b){return b.v-a.v;});
+  h+=card('按项目花费',byProj.length? byProj.map(function(x){
+    return listRow({t:esc(x.p.name)+' '+badge(x.p.stage,'b-accent'),d:x.p.budget?('预算 '+money(x.p.budget)+' 元'):'未设预算',r:money(x.v)+' 元',onclick:`go('project',{projectId:'${x.p.id}',tab:'projects'})`});
+  }).join(''):'<div class="muted tiny">暂无项目</div>',null);
+
+  var set=settings();
+  h+=`<div class="card"><h3>手势与手感</h3>
+    <div class="row" style="cursor:default"><div class="main"><div class="t">滑动快捷操作</div>
+      <div class="d">列表里左滑推一格、右滑退一格；要填原因的（处置去向、改期原因）仍进表单</div></div>
+      <div class="r"><button class="btn sm ${set.swipe?'':'gray'}" onclick="setSetting('swipe',${set.swipe?'false':'true'})">${set.swipe?'已开启':'已关闭'}</button></div></div>
+    <div class="row" style="cursor:default"><div class="main"><div class="t">滑动说明提示</div>
+      <div class="d">装备页与项目页顶部那条「怎么用滑动」，点过「知道了」就不再出现</div></div>
+      <div class="r"><button class="btn sm ${set.hint?'':'gray'}" onclick="setSetting('hint',${set.hint?'false':'true'})">${set.hint?'已显示':'已隐藏'}</button></div></div>
+    <div class="tiny muted" style="margin-top:6px">「撤销」只在滑动后 4 秒内、且这中间没有别的改动时有效。关掉滑动后行照样能点开详情，不影响电脑端使用。</div>
+  </div>`;
+  h+=`<div class="card"><h3>数据备份</h3>
+    <div class="warn-box" style="margin-bottom:10px">数据只存在这台设备的浏览器里（localStorage）。清浏览器缓存/换浏览器=数据丢失，请定期导出备份。最近更新：${esc((DB.meta&&DB.meta.updated_at)||'—')}</div>
+    <div class="btn-row">
+      <button class="btn" onclick="exportJSON()">导出 JSON 备份</button>
+      <button class="btn ghost" onclick="pickImport(false)">导入（覆盖）</button>
+      <button class="btn gray" onclick="pickImport(true)">导入（合并）</button>
+    </div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn gray sm" onclick="copyJSON()">复制到剪贴板</button>
+      <button class="btn gray sm" onclick="rebuildAuto()">重建自动流水</button>
+      <button class="btn gray sm" onclick="loadSample()">载入示例数据</button>
+      <button class="btn danger sm" onclick="wipeAll()">清空全部数据</button>
+    </div>
+    <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="readImport(this)">
+  </div>`;
+  h+=`<div class="card"><h3>作品与角色库</h3>
+    <div class="pill-row" data-sk="workbtns"><button class="btn sm ghost" onclick="formWork()">＋ 新作品</button><button class="btn sm" onclick="formCharacter()">＋ 新角色</button></div>
+    ${DB.works.length? DB.works.map(function(w){
+      var cs=DB.characters.filter(function(c){return c.workId===w.id;});
+      return `<details class="dd"><summary>${esc(w.name)} <span class="muted tiny">${w.type||''} · ${cs.length} 个角色</span></summary>
+        ${cs.length? cs.map(function(c){ return listRow({t:esc(c.name),d:c.note?esc(c.note).slice(0,40):'点击编辑设定要点',
+          r:`<span class="badge" onclick="event.stopPropagation();delCharConfirm('${c.id}')" style="cursor:pointer" title="删除角色">✕</span> <span class="muted">›</span>`,
+          onclick:`formCharacter('${c.id}')`}); }).join('') : '<div class="muted tiny">还没有角色</div>'}
+        <button class="btn sm gray" onclick="formCharacter(null,'${w.id}')">＋ 在《${esc(w.name)}》下加角色</button>
+        <button class="btn sm danger" style="float:right" onclick="delWorkConfirm('${w.id}')">删作品</button></details>`;
+    }).join('') : '<div class="muted tiny">还没有作品：作品 → 角色 → 立项出装</div>'}
+  </div>`;
+  h+=`<details class="dd" style="background:var(--card)"><summary>使用说明与本期边界</summary>
+    <div style="font-size:13px;line-height:1.7">
+    · 主线：<b>作品 → 角色 → 项目（一套出装）</b>；项目分 <b>计划中 / 拍摄中 / 已出片</b> 三类，可手动回退。<br>
+    · 装备台账一张表管所有：C服/道具/假发/美瞳/鞋/饰品/消耗品，状态走 <b>愿望单/购物车 → 已下单/制作中 → 在途 → 已到货 → 试穿通过</b>（不合身就进「修改中」，不穿了「留作纪念」）；<b>报废/已售、外借中</b>都要记<b>去向 CN</b>，卖了还是报废分开选。<br>
+    · 费用：装备价格、预约定金尾款、摄影费定金会自动生成流水，改源即同步；也可以手动记一笔。<br>
+    · 本期<b>不上传照片</b>：参考图、妆面参考、原片/成片都用「链接或本地目录」登记。<br>
+    · 装备清单：拍摄单里点「重新生成」，会把项目在手装备 + 应急包默认项合并成打勾清单。<br>
+    · 交付逾期：交付物约定日期过了还没「已返图」，会在首页与列表标红。<br>
+    · 二期计划：微信小程序 JS 版、图片缩略图墙、存量 Excel 导入、美瞳到期浏览器通知。</div></details>`;
+  return h;
+}
+function delWorkConfirm(wid){
+  var w=get('works',wid); if(!w) return;
+  var cs=DB.characters.filter(function(c){return c.workId===wid;});
+  confirmBox('删除作品','将删除《'+w.name+'》及其 '+cs.length+' 个角色。已立项的项目与装备条目保留，但会失去角色归属。',function(){
+    DB.characters=DB.characters.filter(function(c){return c.workId!==wid;});
+    del('works',wid); render(); toast('已删除');
+  },'确认删除');
+}
+function buildExport(){
+  return { meta:{app:'CosPlan',ver:APP.ver,schema:APP.schema,exported_at:nowStamp(),device:navigator.userAgent.slice(0,80)}, data:DB };
+}
+function exportJSON(){
+  var blob=new Blob([JSON.stringify(buildExport(),null,1)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='cosplan-backup-'+todayISO()+'.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },600);
+  toast('已导出备份文件');
+}
+function copyJSON(){
+  var txt=JSON.stringify(buildExport());
+  copyAny(txt, '备份 JSON（'+Math.round(txt.length/1024)+' KB）');
+}
+function pickImport(merge){ S.mergeMode=!!merge; document.getElementById('importFile').click(); }
+function readImport(inp){
+  var f=inp.files&&inp.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    inp.value='';
+    var obj;
+    try{ obj=JSON.parse(r.result); }catch(e){ toast('文件不是合法 JSON'); return; }
+    var data=obj&&obj.data?obj.data:obj;
+    if(!data||typeof data!=='object'||!data.projects){ toast('文件结构不对：缺少 projects 字段'); return; }
+    var cnt=['projects','items','contacts','sessions','appointments','deliverables','expenses'].map(function(k){ return k+' '+(arr(data[k]).length); }).join('，');
+    confirmBox(S.mergeMode?'合并导入':'覆盖导入',
+      /* 1.1.2 修复：合并模式末尾多一个无配对的右括号；覆盖模式则少了右括号 */
+      (S.mergeMode?'同 id 的以文件为准，其余追加（':'将完全替换本机数据（导出的这份含：')+cnt+'）',
+      function(){ doImport(data,S.mergeMode); },'继续');
+  };
+  r.readAsText(f);
+}
+function doImport(data,merge){
+  if(!merge){ DB=migrate(data); save(); go('home',{tab:'home'}); toast('导入完成'); return; }
+  var fresh=migrate(data);
+  ['works','characters','projects','items','contacts','locations','sessions','appointments','deliverables','publications','expenses','todos'].forEach(function(k){
+    var map={};
+    DB[k].forEach(function(x){ map[x.id]=x; });
+    fresh[k].forEach(function(x){ map[x.id]=x; });
+    DB[k]=Object.keys(map).map(function(id){ return map[id]; });
+  });
+  save(); go('home',{tab:'home'}); toast('合并导入完成');
+}
+function rebuildAuto(){
+  confirmBox('重建自动流水','按当前装备/预约单/拍摄单重新生成自动费用流水（手动记的不受影响）。',function(){
+    DB.expenses=DB.expenses.filter(function(e){return e.source!=='自动';});
+    syncAllAutoExpenses(); render(); toast('已重建');
+  },'重建');
+}
+function wipeAll(){
+  confirmBox('清空全部数据','这会删除本机所有项目、装备、联系人与流水，且不可撤销。真的要清空吗？',function(){
+    confirmBox('最后确认','再点一次确认才真的清空（建议先导出一份备份）。',function(){
+      DB=emptyData(); save(); go('home',{tab:'home'}); toast('已清空');
+    },'确认清空');
+  },'清空');
+}
+
+/* =========================================================
+   v1.2：滑动手势引擎 + 跨模块联动
+   ========================================================= */
+/** 一次「可撤销的改动」：先快照整库，改完落盘重绘。
+    撤销走整库回滚，所以顺手生成的自动流水、自动转阶段、自动补日期会一起回到原样。 */
+function applyAction(msg,mut,opt){
+  opt=opt||{};
+  var snap=JSON.stringify(DB);
+  mut();
+  save(); render();
+  var seq=WRITE_SEQ;
+  if(opt.plain){ toast(msg); return; }
+  toastUndo(msg,function(){ DB=JSON.parse(snap); save(); render(); toast('已撤销'); },seq);
+}
+
+function itemSwappable(i){ return !!(i&&(ITEM_SWIPE_NEXT[i.status]||ITEM_SWIPE_PREV[i.status])); }
+/** 线性流程里前后一格；不在流程内的（已取消 / 爽约 / 已改期 需要填原因）返回 null，也就滑不动 */
+function flowStep(list,st,dir){
+  var i=list.indexOf(st); if(i<0) return null;
+  var j=i+dir; return (j<0||j>=list.length)?null:list[j];
+}
+function swipeTitle(list,from,to){ return list.indexOf(to)>list.indexOf(from)?('推到 '+to+' ›'):('‹ 退到 '+to); }
+
+var SWIPE_DEFS={
+  item:{ steps:function(id){
+      var i=get('items',id); if(!i) return null;
+      var nx=ITEM_SWIPE_NEXT[i.status], pv=ITEM_SWIPE_PREV[i.status];
+      function act(st){ return { t:(st===nx?('推到 '+st+' ›'):('‹ 退到 '+st)), msg:'「'+i.name+'」→ '+st,
+        run:function(){ advanceStatus(i.id,st,{quiet:true}); } }; }
+      return { l:pv?act(pv):null, r:nx?act(nx):null };
+  }},
+  session:{ steps:function(id){
+      var s=get('sessions',id); if(!s) return null;
+      var nx=flowStep(SESSION_FLOW,s.status,1), pv=flowStep(SESSION_FLOW,s.status,-1);
+      function act(st){ return { t:swipeTitle(SESSION_FLOW,s.status,st),
+        msg:'拍摄单 '+(s.date||'')+' → '+st+autoStageText(s,st),
+        run:function(){ var c=get('sessions',s.id); if(!c) return; doSetSession(c,st); autoStage(c); } }; }
+      return { l:pv?act(pv):null, r:nx?act(nx):null };
+  }},
+  appt:{ steps:function(id){
+      var a=get('appointments',id); if(!a) return null;
+      var nx=flowStep(APPT_FLOW,a.status,1), pv=flowStep(APPT_FLOW,a.status,-1);
+      function act(st){ return { t:swipeTitle(APPT_FLOW,a.status,st),
+        msg:(a.type||'预约')+' · '+(contactLabel(a.contactId)||a.contactText||'待定')+' → '+st,
+        run:function(){ setApptStatus(a.id,st); } }; }
+      return { l:pv?act(pv):null, r:nx?act(nx):null };
+  }},
+  deliv:{ steps:function(id){
+      var d=get('deliverables',id); if(!d) return null;
+      var nx=flowStep(DELIV_FLOW,d.status,1), pv=flowStep(DELIV_FLOW,d.status,-1);
+      function act(st){ return { t:swipeTitle(DELIV_FLOW,d.status,st),
+        msg:(d.type||'交付')+' → '+st+((st!=='未交付'&&!d.agreedDate)?' · 记得补约定日期':''),
+        run:function(){ setDelivStatus(d.id,st); } }; }
+      return { l:pv?act(pv):null, r:nx?act(nx):null };
+  }},
+  todo:{ steps:function(id){
+      var t=get('todos',id); if(!t) return null;
+      function act(done){ return { t:done?('完成 ›'):('‹ 重新打开'), msg:(done?'已完成：':'待办重新打开：')+t.title,
+        run:function(){ var c=get('todos',t.id); if(c){ c.done=done; put('todos',c); } } }; }
+      return { l:t.done?act(false):null, r:t.done?null:act(true) };
+  }},
+  project:{ steps:function(id){
+      var p=get('projects',id); if(!p) return null;
+      if(STAGES.indexOf(p.stage)<0) return null;
+      var nx=flowStep(STAGES,p.stage,1), pv=flowStep(STAGES,p.stage,-1);
+      function act(st){ return { t:swipeTitle(STAGES,p.stage,st), msg:'「'+p.name+'」阶段 → '+st,
+        run:function(){ var c=get('projects',p.id); if(c) doSetStage(c,st); },
+        done:st==='已出片'?function(){ var c=get('projects',p.id); if(c) promptDispose(c); }:null }; }
+      return { l:pv?act(pv):null, r:nx?act(nx):null };
+  }}
+};
+function swStepsFor(kind,id){
+  var d=SWIPE_DEFS[kind]; if(!d) return null;
+  var s=d.steps(id);
+  return (!s||(!s.l&&!s.r))?null:s;
+}
+
+/* ---------- 状态写入：滑动与点击共用 ---------- */
+function setApptStatus(aid,st){
+  var a=get('appointments',aid); if(!a) return;
+  a.status=st; a.updated_at=nowStamp(); put('appointments',a); syncApptExpense(a);
+}
+/** 一离开「未交付」就补实际交付日，退回则清掉，逾期红字才不会一直挂着 */
+function setDelivStatus(did,st){
+  var d=get('deliverables',did); if(!d) return;
+  d.status=st; d.updated_at=nowStamp();
+  if(st==='未交付') d.deliveredDate='';
+  else if(!d.deliveredDate) d.deliveredDate=todayISO();
+  put('deliverables',d);
+}
+
+/* ---------- 指针事件：一次只跟一根手指，不设定时器 ---------- */
+var SW_LIMIT=88, SW_MIN=46, SW_TAB_MIN=64;
+var swDrag=null, swSwallow=0;
+/** 起点落在按钮/链接/输入框上就不算滑动：那些是「点」的领地 */
+function swSkip(t,host){
+  var x=t&&t.closest&&t.closest('[onclick],input,button,select,textarea,a,label');
+  return !!(x&&x!==host);
+}
+function swClamp(v){ return Math.max(-SW_LIMIT,Math.min(SW_LIMIT,v)); }
+function initSwipe(){
+  var main=document.getElementById('main');
+  if(!main||main._swInit) return;
+  main._swInit=true;
+  main.addEventListener('pointerdown',swDown);
+  main.addEventListener('pointermove',swMove);
+  main.addEventListener('pointerup',swUp);
+  main.addEventListener('pointercancel',swCancel);
+  /* 锁定之后不让页面顺手竖滚（必须 passive:false 才拦得住） */
+  main.addEventListener('touchmove',function(e){ if(swDrag&&swDrag.locked&&e.cancelable) e.preventDefault(); },{passive:false});
+  /* 滑动提交后浏览器还会补一次 click，短窗口内吞掉，免得顺手点开详情页。
+     撤销按钮就在手指底下，必须放行，否则刚滑完立刻点「撤销」会被一起吞掉。 */
+  document.addEventListener('click',function(e){
+    if(!swSwallow||Date.now()-swSwallow>500) return;
+    if(e.target.closest&&e.target.closest('#toast')) return;
+    swSwallow=0; e.preventDefault(); e.stopPropagation();
+  },true);
+}
+function swDown(e){
+  if(e.pointerType==='mouse'||!settings().swipe) return;
+  if(swDrag) swCancel();
+  var host=e.target.closest?e.target.closest('[data-sw]'):null;
+  if(host){
+    if(swSkip(e.target,host)) return;
+    var kv=String(host.getAttribute('data-sw')).split(':');
+    var steps=swStepsFor(kv[0],kv.slice(1).join(':'));
+    if(!steps) return;
+    swDrag={mode:'row',host:host,steps:steps,x0:e.clientX,y0:e.clientY,locked:false,action:null,side:null,pid:e.pointerId};
+  }else if(S.view==='project'&&PROJ_TABS.length>1){
+    if(swSkip(e.target,null)) return;
+    swDrag={mode:'tab',x0:e.clientX,y0:e.clientY,locked:false,action:null,side:null,pid:e.pointerId};
+  }else return;
+  try{ if(e.target.setPointerCapture) e.target.setPointerCapture(e.pointerId); }catch(_){}
+}
+function swMove(e){
+  var d=swDrag; if(!d||e.pointerId!==d.pid) return;
+  var dx=e.clientX-d.x0, dy=e.clientY-d.y0;
+  if(!d.locked){
+    if(Math.abs(dx)<8&&Math.abs(dy)<8) return;
+    if(Math.abs(dy)>Math.abs(dx)*1.4){ swCancel(); return; }   /* 更像上下滚动：手势让路 */
+    d.side=dx>0?'left':'right';
+    d.action=d.mode==='row'?(dx>0?d.steps.l:d.steps.r):tabTarget(dx);
+    if(!d.action){ swCancel(); return; }
+    d.locked=true;
+    if(d.mode==='row'){
+      d.host.classList.add(d.side==='left'?'sw-l':'sw-r');
+      var p=d.host.querySelector('.swpanel.'+d.side);
+      d.txt=p.querySelector('b'); d.lab=p.querySelector('.swlab'); d.main=d.host.querySelector('.swmain');
+      d.txt.textContent=d.action.t;
+    }else showSwTab(d.action.t);
+    return;
+  }
+  if(d.mode==='tab') return;
+  var x=swClamp(dx);
+  d.main.style.transform='translateX('+x+'px)';
+  d.lab.style.opacity=String(Math.min(.16,Math.abs(x)/SW_LIMIT*.16));
+}
+function swUp(e){
+  var d=swDrag; if(!d||e.pointerId!==d.pid) return;
+  swDrag=null;
+  var dx=e.clientX-d.x0;
+  if(!d.locked||!d.action){ if(d.mode==='row') swReset(d); else hideSwTab(); return; }
+  if(d.mode==='row'){
+    swReset(d);
+    if(Math.abs(dx)<SW_MIN) return;
+    vibrate(12); swSwallow=Date.now();
+    applyAction(d.action.msg,d.action.run);
+    if(d.action.done) d.action.done();
+  }else{
+    hideSwTab();
+    if(Math.abs(dx)<SW_TAB_MIN||(dx>0)!==(d.side==='left')) return;
+    swSwallow=Date.now();
+    S.projTab=d.action.k; render(); toast('已切到「'+d.action.label+'」');
+  }
+}
+function swCancel(){
+  var d=swDrag; if(!d) return;
+  swDrag=null;
+  if(d.mode==='row') swReset(d); else hideSwTab();
+}
+function swReset(d){
+  if(!d||!d.host) return;
+  d.host.classList.remove('sw-l'); d.host.classList.remove('sw-r');
+  var m=d.host.querySelector('.swmain'); if(m) m.style.transform='';
+  var labs=d.host.querySelectorAll('.swlab');
+  for(var i=0;i<labs.length;i++) labs[i].style.opacity='';
+}
+/** 项目页左右滑翻分页：向右滑看前一个分页，向左滑看后一个 */
+function tabTarget(dx){
+  var i=-1;
+  for(var j=0;j<PROJ_TABS.length;j++) if(PROJ_TABS[j][0]===S.projTab) i=j;
+  if(i<0) return null;
+  var k=dx>0?i-1:i+1;
+  if(k<0||k>=PROJ_TABS.length) return null;
+  return { k:PROJ_TABS[k][0], label:PROJ_TABS[k][1], t:dx>0?('‹ '+PROJ_TABS[k][1]):(PROJ_TABS[k][1]+' ›') };
+}
+function showSwTab(txt){ var el=document.getElementById('swTab'); if(!el) return; el.textContent=txt; el.style.display='block'; }
+function hideSwTab(){ var el=document.getElementById('swTab'); if(el) el.style.display='none'; }
+function vibrate(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(_){} }
+function swipeHintBox(){
+  var st=settings(); if(!st.swipe||!st.hint) return '';
+  if(!DB.items.some(itemSwappable)&&!DB.projects.length) return '';
+  return `<div class="info-box" style="margin-bottom:12px">手机上<b>左滑推一格、右滑退一格</b>，松手后 4 秒内还能点「撤销」。
+    「报废/已售」这类要给<b>去向 CN</b> 的状态故意不给滑动，得进表单补记。
+    <div style="text-align:right;margin-top:4px"><span style="cursor:pointer;text-decoration:underline" onclick="setSetting('hint',false)">知道了</span></div></div>`;
+}
+
+/* ---------- 联动动作 ---------- */
+/** 项目转「已出片」后，把还能处置的装备列出来指过去补记 */
+function promptDispose(p){
+  var its=itemsOfProject(p.id).filter(function(i){ return TERMINAL_STATUS.indexOf(i.status)<0&&i.status!=='外借中'; });
+  if(!its.length) return;
+  openModal({
+    title:'出片了 · 这套 '+its.length+' 件怎么处理？',
+    body:'<div class="tiny muted" style="margin-bottom:8px">卖掉的记回血，借人的记 CN，不穿了可以留作纪念。点一条直接跳到处置那一步：</div>'+
+      its.map(function(i){
+        return listRow({t:esc(i.name)+' '+statusBadge(i.status),
+          d:(i.kind||'')+(i.price?' · 挂价 ¥'+money(i.price):'')+(i.storage?' · 放:'+esc(i.storage):''),
+          r:'处置 ›',onclick:"closeModal();formItem('"+i.id+"',{status:'报废/已售',dispKind:'卖了'})"});
+      }).join('')+
+      '<div class="btn-row" style="margin-top:10px"><button class="btn gray" onclick="closeModal()">这次全部留着</button></div>'
+  });
+}
+/** 逾期交付一键转待办，省得再抄一遍名字 */
+function todoFromDeliv(did){
+  var d=get('deliverables',did); if(!d) return;
+  if(DB.todos.some(function(t){ return !t.done&&t.refType==='deliverable'&&t.refId===d.id; })){
+    toast('这条已经转过待办了'); return;
+  }
+  var s=get('sessions',d.sessionId)||{};
+  var t={id:uid('t'),projectId:s.projectId||'',refType:'deliverable',refId:d.id,
+    title:'催 '+(d.type||'交付物')+'（约定 '+(d.agreedDate||'未定')+'）',
+    due:isoOf(new Date(Date.now()+3*86400000)),done:false,note:'首页逾期提醒转入，办完勾掉'};
+  applyAction('已转待办：'+t.title,function(){ put('todos',t); });
+}
+/** 拍完顺手记一条原片交付，默认 7 天返片 */
+function addRawDeliv(sid){
+  var s=get('sessions',sid); if(!s) return;
+  var d={id:uid('d'),sessionId:sid,type:'原片',agreedCount:null,actualCount:null,
+    agreedDate:isoOf(new Date(Date.now()+7*86400000)),deliveredDate:'',link:'',retouch:'',status:'未交付',note:'默认按 7 天返片约定，可进表单改'};
+  applyAction('已记一条原片交付：约定 '+d.agreedDate+' 返片',function(){ put('deliverables',d); });
+}
+/** 按当天预约单 + 开拍时间拼一版时间线草稿，自己再补收尾 */
+function suggestTimeline(sid){
+  var s=get('sessions',sid); if(!s) return;
+  var day=String(s.date||'').slice(0,10);
+  var parts=[];
+  DB.appointments.forEach(function(a){
+    if(a.projectId!==s.projectId||!a.datetime) return;
+    if(day&&String(a.datetime).slice(0,10)!==day) return;
+    var nm=contactLabel(a.contactId)||a.contactText||'待确认';
+    parts.push({t:String(a.datetime).slice(11,16)||'00:00', v:(a.type&&nm.indexOf(a.type)<0)?(a.type+' '+nm):nm});
+  });
+  if(s.time) parts.push({t:s.time,v:'开拍'});
+  parts.sort(function(a,b){ return a.t<b.t?-1:(a.t>b.t?1:0); });
+  if(!parts.length){ toast('这天没有预约单，也没填开拍时间'); return; }
+  var txt=parts.map(function(x){ return x.t+' '+x.v; }).join(' → ');
+  applyAction('已按预约单生成时间线',function(){ s.timeline=txt; s.updated_at=nowStamp(); put('sessions',s); });
+}
+/** 项目页 FAB：按当前分页给最可能的「＋」 */
+function quickAdd(){
+  var p=get('projects',S.projectId);
+  if(!p) return formProject();
+  if(S.projTab==='gear') return formItem(null,{projectIds:[p.id],characterId:p.characterId,status:'愿望单/购物车'});
+  if(S.projTab==='shoot') return formSession(null,{projectId:p.id,status:'计划中'});
+  if(S.projTab==='cost') return formExpense(null,{projectId:p.id,date:todayISO()});
+  return formTodo(null,{projectId:p.id,due:''});
+}
+
+/* =========================================================
+   示例数据（帮助理解流程，可在「我的」清空）
+   ========================================================= */
+function loadSample(){
+  confirmBox('载入示例数据','会往当前库里追加一套示例（原神·芙宁娜），便于看流程。可以随时「清空全部数据」。',function(){
+    var w=findOrCreateWork('原神','游戏');
+    var c={id:uid('c'),workId:w.id,name:'芙宁娜',note:'白蓝渐变长发，礼帽，水元素主题'}; DB.characters.push(c);
+    var p={id:uid('p'),name:'原神·芙宁娜·常驻',characterId:c.id,skin:'常驻',stage:'计划中',occasion:'漫展',
+      deadline:isoOf(new Date(Date.now()+18*86400000)),restore:'高',budget:1200,
+      refLinks:[{label:'官方立绘',url:'https://example.com/furina',note:'发型与配色参考'}],note:'目标 CP 漫展出'};
+    DB.projects.push(p);
+    function it(name,kind,cat,status,price,extra){
+      var o=Object.assign({id:uid('i'),name:name,kind:kind,category:cat,status:status,source:'购买',characterId:c.id,
+        projectIds:[p.id],price:price,orderDate:isoOf(new Date(Date.now()-20*86400000)),refLinks:[],fittings:[]},extra||{});
+      DB.items.push(o); syncItemExpense(o); return o;
+    }
+    it('芙宁娜礼服裙装','C服','连衣裙','试穿通过',420,{size:'M',shop:'某 C 服店',storage:'衣柜2层左',fittings:['2026-08-20 腰围收 2cm（已改）']});
+    it('白蓝渐变长卷发','假发','整顶假发','修改中',160,{wigColor:'白偏蓝',wigLen:'70cm',wigStyle:'未剪',wigBy:'自剪',arrivedDate:isoOf(new Date(Date.now()-12*86400000))});
+    it('高礼帽','饰品','颈饰','试穿通过',90,{storage:'道具箱A'});
+    it('蓝色美瞳','美瞳','美瞳','已到货',60,{clBrand:'某品牌 星河蓝',clDia:'14.2',powerL:'-3.00',powerR:'-3.25',throwType:'年抛',openedAt:isoOf(new Date(Date.now()-200*86400000)),expiresAt:isoOf(new Date(Date.now()+12*86400000))});
+    it('主题高跟靴','鞋','靴','已下单/制作中',230,{size:'38',shop:'闲鱼二手'});
+    it('单手剑（礼装）','道具','手持','已下单/制作中',0,{source:'自制',makeStage:'打磨',makeProgress:55,fragile:'剑刃易断，需竖放专车'});
+    var old=it('旧版裙装（不合身）','C服','连衣裙','报废/已售',0,{size:'S',price:280,dispKind:'卖了',dispTo:'亲友·小A（闲鱼）',dispDate:isoOf(new Date(Date.now()-40*86400000)),dispPrice:150,dispReason:'尺码不合身，出掉回血',dispType:'卖了'});
+    var photo={id:uid('ct'),cn:'摄影师·阿柏',roles:['摄影师'],platforms:[{label:'小红书',url:'apbai_photo'},{label:'微信',url:'apbai_wx'}],
+      phone:'138****0000',portfolio:'https://example.com/apbai',priceNote:'约拍 500/半天，含 30 张精修',rating:'很好',note:'擅长逆光外景，提前 2 周约',warning:false};
+    var makeup={id:uid('ct'),cn:'妆娘·小满',roles:['妆娘','毛娘'],platforms:[{label:'微博',url:'@xiaoman_makeup'}],priceNote:'妆面 120；假毛修剪 80',note:'自然系，能修毛',warning:false};
+    DB.contacts.push(photo,makeup);
+    var loc={id:uid('l'),name:'滨江公园喷泉广场',type:'外景',address:'xx区滨江路',gather:'南门石碑',fee:0,
+      traffic:'地铁2号线B口步行8分钟，路边可临停',facilities:'公共洗手间（远处）',bestHours:'16:30-18:00 逆光柔和',risk:'保安会驱赶三脚架，需手持'};
+    DB.locations.push(loc);
+    var s={id:uid('s'),projectId:p.id,date:isoOf(new Date(Date.now()+10*86400000)),time:'15:30',method:'约拍',
+      contactId:photo.id,locationId:loc.id,fee:500,deposit:200,status:'已确认',
+      timeline:'12:00起妆 14:30到场 15:30开拍 18:00撤',backup:'下雨改到地铁站内棚 20 号',
+      checklist:[],note:''};
+    DB.sessions.push(s); syncSessionExpense(s); syncChecklist(s.id);
+    var d1={id:uid('d'),sessionId:s.id,type:'原片',agreedCount:60,agreedDate:isoOf(new Date(Date.now()-3*86400000)),status:'未交付',link:'',retouch:'',note:'催片中'};
+    var d2={id:uid('d'),sessionId:s.id,type:'精修',agreedCount:30,agreedDate:isoOf(new Date(Date.now()+17*86400000)),status:'未交付',link:'',retouch:'肤色偏冷，背景虚化别太重',note:''};
+    DB.deliverables.push(d1,d2);
+    DB.appointments.push({id:uid('a'),projectId:p.id,type:'妆娘',contactId:makeup.id,datetime:s.date+'T12:00',place:'公园附近工作室',
+      fee:200,deposit:100,status:'已付定金',requirement:'自然水系妆，睫毛要长',paidNote:'定金微信已转',refLinks:[],note:''});
+    syncApptExpense(DB.appointments[DB.appointments.length-1]);
+    DB.todos.push({id:uid('t'),projectId:p.id,title:'催摄影师原片（已逾期 3 天）',due:isoOf(new Date(Date.now()-2*86400000)),done:false,note:''});
+    DB.todos.push({id:uid('t'),projectId:p.id,title:'假发给毛娘补造型',due:isoOf(new Date(Date.now()+6*86400000)),done:false,note:'问小满能不能顺便修刘海'});
+    DB.expenses.push({id:uid('e'),projectId:p.id,date:todayISO(),category:'交通',amount:60,note:'勘景打车',source:'手动'});
+    save(); render(); toast('示例数据已载入');
+  },'载入');
+}
+
+/* =========================================================
+   启动
+   ========================================================= */
+window.go=go; window.render=render; window.formProject=formProject; window.formItem=formItem; window.formContact=formContact;
+window.formLocation=formLocation; window.formSession=formSession; window.formAppt=formAppt; window.formDeliv=formDeliv;
+window.formPub=formPub; window.formExpense=formExpense; window.formTodo=formTodo; window.formWork=formWork; window.formCharacter=formCharacter;
+window.toast=toast; window.gotoTarget=gotoTarget; window.navBack=navBack; window.setStage=setStage;
+window.advanceStatus=advanceStatus; window.linkItemPicker=linkItemPicker; window.linkItemToProject=linkItemToProject;
+window.toggleTodo=toggleTodo; window.delTodo=delTodo; window.delProjectConfirm=delProjectConfirm; window.delItemConfirm=delItemConfirm;
+window.delContactConfirm=delContactConfirm; window.delLocationConfirm=delLocationConfirm; window.delSessionConfirm=delSessionConfirm;
+window.setSessionStatus=setSessionStatus; window.toggleCheck=toggleCheck; window.delCheck=delCheck; window.resetChecks=resetChecks;
+window.addCheckItem=addCheckItem; window.regenChecklist=regenChecklist; window.loadSample=loadSample; window.wipeAll=wipeAll;
+window.exportJSON=exportJSON; window.copyJSON=copyJSON; window.pickImport=pickImport; window.readImport=readImport;
+window.rebuildAuto=rebuildAuto; window.delWorkConfirm=delWorkConfirm;
+/* 1.1.2 新增导出 */
+window.delApptConfirm=delApptConfirm; window.delExpenseConfirm=delExpenseConfirm;
+window.delDelivConfirm=delDelivConfirm; window.delPubConfirm=delPubConfirm; window.delCharConfirm=delCharConfirm;
+window.newApptFor=newApptFor; window.copyAny=copyAny; window.apptTypeOf=apptTypeOf;
+/* 1.1.2 修复：file:// 属于非安全上下文，且窗口失焦时 navigator.clipboard.writeText 会 reject，
+   导致点平台 ID 就"复制失败"。改为三层兜底：execCommand 优先 → Clipboard API → 手动复制框。 */
+function copyByExec(text){
+  var ta=document.createElement('textarea');
+  ta.value=text;
+  ta.setAttribute('readonly','');
+  ta.style.cssText='position:fixed;top:0;left:-9999px;width:1px;height:1px;opacity:0';
+  document.body.appendChild(ta);
+  var okc=false;
+  try{
+    var r=document.createRange(); r.selectNodeContents(ta);
+    var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    ta.setSelectionRange(0, String(text).length);
+    okc=document.execCommand('copy');
+  }catch(e){ okc=false; }
+  document.body.removeChild(ta);
+  return okc;
+}
+function copyManual(text, label){
+  openModal({
+    title:'自动复制被浏览器拦了，手动复制一下', center:true,
+    body:'<div class="muted tiny" style="margin-bottom:6px">'+esc(label)+' 已经帮你全选好：电脑按 Ctrl+C，手机长按选中文本再复制</div>'+
+      '<input id="manualCopy" type="text" readonly style="width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;background:var(--card)">',
+    onMount:function(m){
+      var i=m.querySelector('#manualCopy'); i.value=text; i.focus(); i.select();
+      try{ i.setSelectionRange(0, String(text).length); }catch(e){}
+    }
+  });
+}
+/** 通用复制：成功给 toast，失败自动降级到手动复制框 */
+function copyAny(text, label){
+  text=String(text==null?'':text);
+  if(!text){ toast('没有可复制的内容'); return; }
+  if(copyByExec(text)){ toast('已复制：'+text); return; }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(
+      function(){ toast('已复制：'+(label||text)); },
+      function(){ copyManual(text, label||'内容'); });
+  }else copyManual(text, label||'内容');
+}
+window.copyText=function(t){ copyAny(t, String(t||'')); };
+function boot(){
+  load();
+  if(!DB.meta) DB.meta={};
+  settings();            /* v1.2：手势开关先落到对象上，渲染与指针事件都要读 */
+  DB.meta.opened_at=nowStamp();
+  render();
+  initSwipe();           /* 监听挂在 #main 上，render 只换 innerHTML，不会掉 */
+}
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeModal(); });
+if(typeof module==='undefined') boot();
+</script>
+</body>
+</html>
